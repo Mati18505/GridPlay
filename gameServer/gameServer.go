@@ -8,15 +8,16 @@ import (
 	"slices"
 	"sync"
 
-	"github.com/gorilla/websocket"
+	"github.com/google/uuid"
 )
 
 type room struct {
 	game        *game.Game
+	connections [2]uuid.UUID
 }
 
 type Server struct {
-	connections map[*websocket.Conn]*Connection
+	connections map[uuid.UUID]*Connection
 	rooms       []*room
 	mut sync.Mutex
 	matcher chan *Connection
@@ -24,7 +25,7 @@ type Server struct {
 
 func InitGameServer() *Server {
 	srv := &Server{
-		connections: make(map[*websocket.Conn]*Connection),
+		connections: make(map[uuid.UUID]*Connection),
 		rooms: make([]*room, 0),
 		matcher: make(chan *Connection, 2),
 	}
@@ -32,9 +33,16 @@ func InitGameServer() *Server {
 	return srv
 }
 
-func (srv *Server) AddConnection(id *websocket.Conn, conn *Connection) error {
+func (srv *Server) AddConnection(conn *Connection) error {
 	srv.mut.Lock()
 	defer srv.mut.Unlock()
+
+	id, err := uuid.NewUUID()
+	if err != nil {
+		return errors.New("cannot generate uuid for this connection")
+	}
+
+	conn.id = id
 
 	_, exist := srv.connections[id]
 	if exist {
@@ -44,7 +52,7 @@ func (srv *Server) AddConnection(id *websocket.Conn, conn *Connection) error {
 	srv.connections[id] = conn
 	srv.matcher <- conn
 
-	log.Printf("connected to %q\n", conn.GetRemoteIP())
+	log.Printf("connected to %q, uuid:%q\n", conn.GetRemoteIP(), id.String())
 
 	go conn.receiveMessages()
 	go srv.routeMessages(conn)
@@ -52,20 +60,21 @@ func (srv *Server) AddConnection(id *websocket.Conn, conn *Connection) error {
 	return nil
 }
 
-func (srv *Server) DeleteConnection(id *websocket.Conn) {
+func (srv *Server) DeleteConnection(id uuid.UUID) {
 	srv.mut.Lock()
 	defer srv.mut.Unlock()
 
 	delete(srv.connections, id)
 }
 
-func (srv *Server) addGame(game *game.Game) {
+func (srv *Server) addGame(game *game.Game, connections [2]uuid.UUID) {
 	srv.mut.Lock()
 	defer srv.mut.Unlock()
 
 	log.Println("creating room")
 	room := &room{
 		game: game,
+		connections: connections,
 	}
 	srv.rooms = append(srv.rooms, room)
 }
@@ -81,7 +90,7 @@ func (srv *Server) matchMaker() {
 
 		if a1 && a2 {
 			game := game.CreateGame(p1.player, p2.player)
-			srv.addGame(game)
+			srv.addGame(game, [2]uuid.UUID{p1.id, p2.id})
 
 			p1MatchStartMsg, err := MakeMessage(MatchStarted, &matchStarted{
 				Char: p1.player.GetChar(),
@@ -140,7 +149,7 @@ func (srv *Server) routeMessages(conn *Connection) {
 				}
 			case <- conn.exitChan:
 				log.Printf("disconnected from %q\n", conn.GetRemoteIP())
-				srv.DeleteConnection(conn.socket)
+				srv.DeleteConnection(conn.id)
 				conn.close()
 				// Send win message to opponent
 				// Send opponent to lobby
@@ -162,12 +171,37 @@ func (srv *Server) handleMove(conn *Connection, msg *moveMessage) error {
 	} else {
 		response.Approved = true
 	}
+
 	resMsg, err := MakeMessage(int(MoveAns), response) 
 	if err != nil {
 		return err
 	}
 
 	err = conn.sendMessage(resMsg)
+
+	if err != nil {
+		return err
+	}
+
+	if response.Approved {
+		if room := srv.GetRoomWithConnectionID(conn.id); room != nil {
+			idx := slices.Index(room.connections[:], conn.id)
+			opponentID := room.connections[(idx+1)%2]
+		
+			msgForOpponent, err := MakeMessage(OpponentMove, &moveMessage{
+				X: pos.X,
+				Y: pos.Y,
+			})
+			if err != nil {
+				return err
+			}
+
+			srv.connections[opponentID].sendMessage(msgForOpponent)
+		} else {
+			return errors.New("cannot find room with player")
+		}
+	}
+
 	return err
 }
 
@@ -206,8 +240,12 @@ func (srv *Server) gameEndHandler(p1, p2 *Connection) func (winner int) {
 	}
 }
 
-func (srv *Server) GetRoomWithGame(g *game.Game) {
-	slices.IndexFunc(srv.rooms, func (room *room) bool {
-		return room.game == g;		
+func (srv *Server) GetRoomWithConnectionID(id uuid.UUID) *room {
+	idx := slices.IndexFunc(srv.rooms, func(r *room) bool {
+		return slices.Contains(r.connections[:], id)
 	})
+	if idx == -1 {
+		return nil
+	}
+	return srv.rooms[idx]
 }

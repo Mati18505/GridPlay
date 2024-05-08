@@ -4,10 +4,12 @@ import (
 	"TicTacToe/game"
 	"log"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
 type Connection struct {
+	id uuid.UUID
 	socket  *websocket.Conn
 	player *game.Player
 	messageFromClient chan *message

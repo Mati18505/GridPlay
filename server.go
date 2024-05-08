@@ -21,7 +21,7 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
     }
 
 	conn := gameServer.CreateConnection(socket)
-	err = srv.AddConnection(socket, conn)
+	err = srv.AddConnection(conn)
 	if err != nil {
 		log.Println("cannot add connection")
 	}
