@@ -117,8 +117,10 @@ func (game *Game) check(pos Pos, c char, pId int) error {
 	game.moveCount++;
 
 	if game.checkWinnerByLastMove(pos) != e {
+		game.gameEnded = true
 		game.EndGame(pId)
 	} else if game.checkDraw() {
+		game.gameEnded = true
 		game.EndGame(-1)
 	}
 
