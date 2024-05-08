@@ -30,6 +30,14 @@ func (p *Player) GetID() int {
 	return p.id
 }
 
+func (p *Player) GetChar() rune {
+	if p.char == x {
+		return 'x'
+	} else {
+		return 'o'
+	}
+}
+
 type Pos struct {
 	X int `json:"x"`
 	Y int `json:"y"`

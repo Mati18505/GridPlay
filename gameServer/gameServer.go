@@ -76,18 +76,29 @@ func (srv *Server) matchMaker() {
 		p1 := <-srv.matcher
 		p2 := <-srv.matcher
 
-		matchStartMsg := &message{
-			Type: MatchStarted,
-		}
-
 		a1 := p1.sendPing() == nil
 		a2 := p2.sendPing() == nil
 
 		if a1 && a2 {
 			game := game.CreateGame(p1.player, p2.player)
 			srv.addGame(game)
-			p1.sendMessage(matchStartMsg)
-			p2.sendMessage(matchStartMsg)
+
+			p1MatchStartMsg, err := MakeMessage(MatchStarted, &matchStarted{
+				Char: p1.player.GetChar(),
+				OpponentChar: p2.player.GetChar(),
+			})
+			
+			p2MatchStartMsg, err2 := MakeMessage(MatchStarted, &matchStarted{
+				Char: p2.player.GetChar(),
+				OpponentChar: p1.player.GetChar(),
+			})
+
+			if err != nil || err2 != nil {
+				log.Print("cannot make match started message")
+			}
+
+			p1.sendMessage(p1MatchStartMsg)
+			p2.sendMessage(p2MatchStartMsg)
 			game.EndGame = srv.gameEndHandler(p1, p2)
 		} else if !a1 {
 			srv.matcher <- p2

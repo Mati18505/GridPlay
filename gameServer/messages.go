@@ -17,6 +17,11 @@ type moveMessage struct {
 	Y int `json:"y"`
 }
 
+type matchStarted struct {
+	Char rune `json:"char"`
+	OpponentChar rune `json:"opponentChar"`
+}
+
 type moveRes struct {
 	Approved        bool   `json:"approved"`
 	Reason string `json:"reason"`
