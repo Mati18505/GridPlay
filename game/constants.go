@@ -7,7 +7,7 @@ import (
 type char int
 
 const (
-	e = iota
+	e char = iota
 	x
 	o
 )
@@ -26,3 +26,4 @@ func OpponentChar(c char) char {
 		return 0
 	}
 }
+

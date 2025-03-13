@@ -2,6 +2,7 @@ package gameServer
 
 import (
 	"TicTacToe/game"
+	"TicTacToe/game/winState"
 	"errors"
 	"fmt"
 	"log"
@@ -110,7 +111,6 @@ func (srv *Server) matchMaker() {
 
 			p1.sendMessage(p1MatchStartMsg)
 			p2.sendMessage(p2MatchStartMsg)
-			game.EndGame = srv.gameEndHandler(p1, p2)
 		} else if !a1 {
 			srv.matcher <- p2
 		} else if !a2 {
@@ -166,8 +166,9 @@ func (srv *Server) handleMove(conn *Connection, msg *moveMessage) error {
 	pos := game.Pos{ X: msg.X, Y: msg.Y }
 
 	var err error
+	currPlayer := conn.game.GetCurrentRoundPlayer()
 
-	if conn.game.GetCurrentRoundPlayer() == *conn.player {
+	if currPlayer == *conn.player {
 		err = conn.game.Move(pos)
 	} else {
 		err = errors.New("not your round, dummy")
@@ -205,7 +206,16 @@ func (srv *Server) handleMove(conn *Connection, msg *moveMessage) error {
 				return err
 			}
 
-			srv.connections[opponentID].sendMessage(msgForOpponent)
+			opponent := srv.connections[opponentID]
+			opponent.sendMessage(msgForOpponent)
+
+			wState := conn.game.GetWinState()
+			
+			if wState == winState.Values.Win {
+				srv.gameEndWinHandler(conn, opponent)
+			} else if wState == winState.Values.Draw {
+				srv.gameEndDrawHandler(conn, opponent)
+			}
 		} else {
 			return errors.New("cannot find room with player")
 		}
@@ -214,39 +224,40 @@ func (srv *Server) handleMove(conn *Connection, msg *moveMessage) error {
 	return err
 }
 
-func (srv *Server) gameEndHandler(p1, p2 *Connection) func (winner int) {
-	return func (winnerID int)  {
-		var winner *Connection
-		var looser *Connection
-
-		if p1.player.GetID() == winnerID {
-			winner = p1
-			looser = p2
-		} else {
-			winner = p2
-			looser = p1
-		}
-		
-		winMsg, err := MakeMessage(WinEvent, &winMessage{
-			Status: "win",
-			Cause: "",
-		})
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			winner.sendMessage(winMsg)
-		}
-		
-		looseMsg, err := MakeMessage(WinEvent, &winMessage{
-			Status: "loose",
-			Cause: "",
-		})
-		if err != nil {
-			fmt.Println(err)
-		} else {
-			looser.sendMessage(looseMsg) 
-		}
+func (srv *Server) gameEndWinHandler(winner, loser *Connection) {
+	winMsg, err := MakeMessage(WinEvent, &winMessage{
+		Status: "win",
+		Cause: "",
+	})
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		winner.sendMessage(winMsg)
 	}
+	
+	looseMsg, err := MakeMessage(WinEvent, &winMessage{
+		Status: "loose",
+		Cause: "",
+	})
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		loser.sendMessage(looseMsg) 
+	}
+}
+
+func (srv *Server) gameEndDrawHandler(p1, p2 *Connection) {
+	drawMsg, err := MakeMessage(WinEvent, &winMessage{
+		Status: "draw",
+		Cause: "",
+	})
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		p1.sendMessage(drawMsg)
+		p2.sendMessage(drawMsg) 
+	}
+	
 }
 
 func (srv *Server) GetRoomWithConnectionID(id uuid.UUID) *room {

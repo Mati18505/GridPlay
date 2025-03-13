@@ -1,6 +1,7 @@
 package game
 
 import (
+	"TicTacToe/game/winState"
 	"container/list"
 	"errors"
 	"math"
@@ -31,10 +32,7 @@ type Pos struct {
 type Game struct {
 	players [2]Player
 	state [][]char
-	turn int 
-	moveCount uint
-	gameEnded bool
-	EndGame func(winner int)
+	winState winState.WinState
 	moveHistory list.List
 }
 
@@ -47,7 +45,7 @@ func CreateGame(player1, player2 *Player) *Game {
 	game := &Game{
 		players: [2]Player{*player1, *player2},
 		state: createEmptyState(),
-		turn: 0,
+		winState: winState.Values.None,
 		moveHistory: *list.New(),
 	}
 
@@ -97,17 +95,17 @@ func (game *Game) checkWinnerByLastMove() char {
 }
 
 func (game *Game) checkDraw() bool {
-    return game.moveCount == uint(math.Pow(3.0, 2.0)) - 1
+    return game.moveHistory.Len() == int(math.Pow(3.0, 2.0)) - 1
 }
 
 
 func (game *Game) Move(pos Pos) error {
-	if game.gameEnded {
+	if game.winState != winState.Values.None {
 		return errors.New("cannot move after game ended")
 	}
 		
 	p := game.GetCurrentRoundPlayer()
-	err := game.check(pos, p.char, p.id)
+	err := game.check(pos, p.char)
 
 	if err != nil {
 		return err
@@ -119,17 +117,18 @@ func (game *Game) Move(pos Pos) error {
 	})
 
 	if game.checkWinnerByLastMove() != e {
-		game.gameEnded = true
-		game.EndGame(p.id)
+		state := winState.Values.Win
+		state.Player = winState.Player{Id: p.id, Char: int(p.char)}
+
+		game.winState = state
 	} else if game.checkDraw() {
-		game.gameEnded = true
-		game.EndGame(-1)
+		game.winState = winState.Values.Draw
 	}
 
 	return nil
 }
 
-func (game *Game) check(pos Pos, c char, pId int) error {
+func (game *Game) check(pos Pos, c char) error {
 	if game.state[pos.X][pos.Y] != e {
 		return errors.New("cell is not empty")
 	}
@@ -137,6 +136,11 @@ func (game *Game) check(pos Pos, c char, pId int) error {
 	game.state[pos.X][pos.Y] = c;
 
 	return nil
+}
+
+
+func (game *Game) GetWinState() winState.WinState {
+	return game.winState
 }
 
 type move struct {

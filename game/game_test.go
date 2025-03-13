@@ -1,6 +1,7 @@
 package game
 
 import (
+	"TicTacToe/game/winState"
 	"container/list"
 	"testing"
 
@@ -11,9 +12,6 @@ func TestGameEnd(t *testing.T) {
 	p1 := &Player{}
 	p2 := &Player{}
 	game := CreateGame(p1, p2)
-	game.EndGame = func(winner int) {
-		require.Equal(t, winner, p1.GetID())
-	}
 
 	require.NotEqual(t, p1.GetChar(), p2.GetChar())
 	require.NotEqual(t, p1.GetID(), p2.GetID())
@@ -25,6 +23,14 @@ func TestGameEnd(t *testing.T) {
 	require.NoError(t, game.Move(Pos{2,1}))
 	require.NoError(t, game.Move(Pos{2,2}))
 	// Game ends here. p1 wins
+	
+	state := game.GetWinState()
+
+	require.Equal(t, state, winState.Values.Win)
+	winner := state.GetPlayer()
+
+	require.Equal(t, winner.Id, p1.id)
+
  	require.Error(t, game.Move(Pos{1, 2}))
 }
 
@@ -32,9 +38,6 @@ func TestGameDraw(t *testing.T) {
 	p1 := &Player{}
 	p2 := &Player{}
 	game := CreateGame(p1, p2)
-	game.EndGame = func(winner int) {
-		require.Equal(t, winner, -1)
-	}
 
 	require.NotEqual(t, p1.GetChar(), p2.GetChar())
 	require.NotEqual(t, p1.GetID(), p2.GetID())
@@ -49,6 +52,8 @@ func TestGameDraw(t *testing.T) {
 	require.NoError(t, game.Move(Pos{0,2}))
 	require.NoError(t, game.Move(Pos{1,2}))
 	// Game ends here. draw
+
+	require.Equal(t, game.GetWinState(), winState.Values.Draw)
  	require.Error(t, game.Move(Pos{1, 2}))
 }
 
