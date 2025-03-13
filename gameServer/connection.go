@@ -12,6 +12,7 @@ type Connection struct {
 	id uuid.UUID
 	socket  *websocket.Conn
 	player *game.Player
+	game *game.Game
 	messageFromClient chan *message
 	exitChan chan bool
 }

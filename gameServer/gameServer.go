@@ -91,6 +91,8 @@ func (srv *Server) matchMaker() {
 		if a1 && a2 {
 			game := game.CreateGame(p1.player, p2.player)
 			srv.addGame(game, [2]uuid.UUID{p1.id, p2.id})
+			p1.game = game
+			p2.game = game
 
 			p1MatchStartMsg, err := MakeMessage(MatchStarted, &matchStarted{
 				Char: p1.player.GetChar(),
@@ -163,7 +165,14 @@ func (srv *Server) handleMove(conn *Connection, msg *moveMessage) error {
 	log.Printf("Data: %q\n", msg)
 	pos := game.Pos{ X: msg.X, Y: msg.Y }
 
-	err := conn.player.Move(pos)
+	var err error
+
+	if conn.game.GetCurrentRoundPlayer() == *conn.player {
+		err = conn.game.Move(pos)
+	} else {
+		err = errors.New("not your round, dummy")
+	}
+
 	response := new(moveRes) 
 	if err != nil {	
 		response.Approved = false
