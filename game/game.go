@@ -36,14 +36,18 @@ type Game struct {
 	moveHistory list.List
 }
 
-func CreateGame(player1, player2 *Player) *Game {
-	player1.char = RandomChar()
-	player2.char = OpponentChar(player1.char)
-	player1.id = 0
-	player2.id = 1
+func CreateGame() *Game {
+	p1 := Player{
+		char: RandomChar(),
+		id: 0,
+	}
+	p2 := Player{
+		char: OpponentChar(p1.char),
+		id: 1,
+	}
 
 	game := &Game{
-		players: [2]Player{*player1, *player2},
+		players: [2]Player{p1, p2},
 		state: createEmptyState(),
 		winState: winState.Values.None,
 		moveHistory: *list.New(),

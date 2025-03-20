@@ -9,14 +9,8 @@ import (
 )
 
 func TestGameEnd(t *testing.T) {
-	p1 := &Player{}
-	p2 := &Player{}
-	game := CreateGame(p1, p2)
+	game := CreateGame()
 
-	require.NotEqual(t, p1.GetChar(), p2.GetChar())
-	require.NotEqual(t, p1.GetID(), p2.GetID())
-
-	// TODO: set game round to p1
 	require.NoError(t, game.Move(Pos{0,0}))
 	require.NoError(t, game.Move(Pos{1,0}))
 	require.NoError(t, game.Move(Pos{1,1}))
@@ -29,20 +23,14 @@ func TestGameEnd(t *testing.T) {
 	require.Equal(t, state, winState.Values.Win)
 	winner := state.GetPlayer()
 
-	require.Equal(t, winner.Id, p1.id)
+	require.Equal(t, winner.Id, 0) // 0 = id of player 1
 
  	require.Error(t, game.Move(Pos{1, 2}))
 }
 
 func TestGameDraw(t *testing.T) {
-	p1 := &Player{}
-	p2 := &Player{}
-	game := CreateGame(p1, p2)
+	game := CreateGame()
 
-	require.NotEqual(t, p1.GetChar(), p2.GetChar())
-	require.NotEqual(t, p1.GetID(), p2.GetID())
-
-	// TODO: set game round to p1
 	require.NoError(t, game.Move(Pos{0,0}))
 	require.NoError(t, game.Move(Pos{2,0}))
 	require.NoError(t, game.Move(Pos{1,0}))
