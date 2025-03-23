@@ -4,6 +4,7 @@ import (
 	"TicTacToe/game/winState"
 	"container/list"
 	"errors"
+	"log"
 	"math"
 )
 
@@ -170,4 +171,13 @@ func (game *Game) getLastMove() (move, error) {
 	}
 
 	return lastMove.Value.(move), nil
+}
+
+func (game *Game) GetPlayerWithId(id int) Player {
+	if id < 0 || id > 1 {
+		// TODO: assert
+		log.Fatalf("I shouldn't be here.")
+		panic("I shouldn't be here.")
+	}
+	return game.players[id]
 }
