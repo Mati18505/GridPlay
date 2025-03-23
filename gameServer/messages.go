@@ -32,12 +32,17 @@ type winMessage struct {
 	Cause string `json:"cause"`
 }
 
+type NotAllowedErrMessage struct {
+	Reason string `json:"reason"`
+}
+
 // From server
 const (
 	MatchStarted = iota
 	MoveAns
 	OpponentMove
 	WinEvent
+	NotAllowedErr
 )
 
 // From client
