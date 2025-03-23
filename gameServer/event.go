@@ -2,6 +2,8 @@ package gameServer
 
 import (
 	"errors"
+
+	"github.com/google/uuid"
 )
 
 type Event struct {
@@ -18,16 +20,43 @@ func CreateEvent(eType EventType) Event {
 	}
 }
 
-type EventType interface{}
+type EventTypeEnum int
+const (
+	EventTypeExit EventTypeEnum = iota
+	EventTypeMove
+	EventTypeSendMessage
+)
+
+type EventType interface{
+	GetEventType() EventTypeEnum
+}
 
 type EventExit struct {
-	EventType
+	roomUUID uuid.UUID
+	player *player
+	connectionId uuid.UUID
+	opponentConnId uuid.UUID
 }
 
 type EventMove struct {
-	EventType
 	x int
 	y int
+	player *player
+}
+
+type EventSendMessage struct {
+	connectionId uuid.UUID
+	msg message
+}
+
+func (eType EventExit) GetEventType() EventTypeEnum {
+	return EventTypeExit;
+}
+func (eType EventMove) GetEventType() EventTypeEnum {
+	return EventTypeMove;
+}
+func (eType EventSendMessage) GetEventType() EventTypeEnum {
+	return EventTypeSendMessage;
 }
 
 func eventTypeFromMessage(msg *message) (EventType, error) {
@@ -45,6 +74,6 @@ func eventTypeFromMessage(msg *message) (EventType, error) {
 		}, nil
 
 	default:
-		return nil, errors.New("This message has no corresponding event.")
+		return nil, errors.New("this message has no corresponding event")
 	}
 }
