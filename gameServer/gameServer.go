@@ -90,7 +90,7 @@ func (srv *Server) matchMaker() {
 		a2 := p2.sendPing() == nil
 
 		if a1 && a2 {
-			game := game.CreateGame(p1.player, p2.player)
+			game := game.CreateGame()
 			srv.addGame(game, [2]uuid.UUID{p1.id, p2.id})
 			p1.game = game
 			p2.game = game
