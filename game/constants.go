@@ -4,7 +4,7 @@ import (
 	"math/rand"
 )
 
-type char int
+type char rune
 
 const (
 	e char = iota

@@ -96,13 +96,13 @@ func (srv *Server) matchMaker() {
 			p2.game = game
 
 			p1MatchStartMsg, err := MakeMessage(MatchStarted, &matchStarted{
-				Char: p1.player.GetChar(),
-				OpponentChar: p2.player.GetChar(),
+				Char: rune(p1.player.GetChar()),
+				OpponentChar: rune(p2.player.GetChar()),
 			})
 			
 			p2MatchStartMsg, err2 := MakeMessage(MatchStarted, &matchStarted{
-				Char: p2.player.GetChar(),
-				OpponentChar: p1.player.GetChar(),
+				Char: rune(p2.player.GetChar()),
+				OpponentChar: rune(p1.player.GetChar()),
 			})
 
 			if err != nil || err2 != nil {

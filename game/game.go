@@ -16,7 +16,7 @@ func (p *Player) GetID() int {
 	return p.id
 }
 
-func (p *Player) GetChar() rune {
+func (p *Player) GetChar() char {
 	if p.char == x {
 		return 'x'
 	} else {
