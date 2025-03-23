@@ -5,29 +5,15 @@ import (
 )
 
 type Event struct {
-	receiver Receiver
 	eType EventType
-}
-
-func (e *Event) GetReceiver() Receiver {
-	return e.receiver
 }
 
 func (e *Event) GetType() EventType {
 	return e.eType
 }
 
-type Receiver int
-const (
-	RCV_Connection Receiver = iota
-	RCV_Player
-	RCV_Room
-	RCV_Server
-)
-
-func CreateEvent(receiver Receiver, eType EventType) Event {
+func CreateEvent(eType EventType) Event {
 	return Event{
-		receiver: receiver,
 		eType: eType,
 	}
 }
