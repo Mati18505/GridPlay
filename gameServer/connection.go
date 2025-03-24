@@ -1,18 +1,13 @@
 package gameServer
 
 import (
-	"TicTacToe/game"
 	"log"
 
-	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
 type Connection struct {
-	id uuid.UUID
 	socket  *websocket.Conn
-	player *game.Player
-	game *game.Game
 	messageFromClient chan *message
 	exitChan chan bool
 }
@@ -22,7 +17,6 @@ func CreateConnection(socket  *websocket.Conn) *Connection {
 		socket: socket,
 		messageFromClient: make(chan *message),
 		exitChan: make(chan bool),
-		player: &game.Player{},
 	}
 }
 
@@ -61,7 +55,7 @@ func (conn *Connection) sendPing() error {
 }
 
 func (conn *Connection) close() {
-	// Wait until messages are send?
+	// TODO: Wait until messages are send?
 	conn.socket.Close()
 }
 
