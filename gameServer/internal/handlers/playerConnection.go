@@ -74,14 +74,12 @@ func (pConn *PlayerConnection) loop() {
 
 			log.Printf("playerConnection: received message from %q: Type: %v, ", remoteIP, message.ClientMsg(msg.Type))
 
-			eType, err := EventTypeFromMessage(msg)
+			e, err := EventFromMessage(msg)
 
 			if err != nil {
 				log.Printf("Unknown type of message")
 				continue
 			} 
-			
-			e := event.CreateEvent(eType)
 
 			log.Printf("playerConnection: Created event %+v", e)
 			pConn.Handle(e)
@@ -90,9 +88,9 @@ func (pConn *PlayerConnection) loop() {
 			log.Printf("disconnected from %q\n", remoteIP)
 			conn.Close()
 
-			e := event.CreateEvent(EventExit{
+			e := EventExit{
 				ConnectionId: pConn.id,
-			})
+			}
 
 			if pConn.nextHandler != nil {
 				pConn.nextHandler.Handle(e)

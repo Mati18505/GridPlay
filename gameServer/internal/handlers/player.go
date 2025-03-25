@@ -29,22 +29,20 @@ func (player *Player) Handle(e event.Event) {
 
 	log.Printf("event in player: Type: %v, ", eType)
 
-	switch eType.GetEventType() {
+	switch eType {
 	case event.EventTypeMove:
-		eMove, _ := eType.(EventMove)
+		eMove, _ := e.(EventMove)
 
 		eMove.Player = player
-		e := event.CreateEvent(eMove)
-
-		player.nextHandler.Handle(e)
+		
+		player.nextHandler.Handle(eMove)
 
 	case event.EventTypeExit:
-		eExit, _ := eType.(EventExit)
+		eExit, _ := e.(EventExit)
 
 		eExit.Player = player
-		e := event.CreateEvent(eExit)
 
-		player.nextHandler.Handle(e)
+		player.nextHandler.Handle(eExit)
 
 	default:
 		player.nextHandler.Handle(e)

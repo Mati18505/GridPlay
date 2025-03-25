@@ -1,26 +1,12 @@
 package event
 
-type Event struct {
-	eType EventType
+type Event interface {
+	GetType() EventType
 }
 
-func (e *Event) GetType() EventType {
-	return e.eType
-}
-
-func CreateEvent(eType EventType) Event {
-	return Event{
-		eType: eType,
-	}
-}
-
-type EventTypeEnum int
+type EventType int
 const (
-	EventTypeExit EventTypeEnum = iota
+	EventTypeExit EventType = iota
 	EventTypeMove
 	EventTypeSendMessage
 )
-
-type EventType interface{
-	GetEventType() EventTypeEnum
-}

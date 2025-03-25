@@ -69,10 +69,10 @@ func (room *Room) sendMatchStartedMessage(player *Player) {
 		// TODO: what now?
 	}
 
-	room.nextHandler.Handle(event.CreateEvent(EventSendMessage{
+	room.nextHandler.Handle(EventSendMessage{
 		ConnectionId: player.connectionID,
 		Msg: *matchStartMsg,
-	}))
+	})
 }
 
 func (room *Room) Handle(e event.Event) { 
@@ -80,9 +80,9 @@ func (room *Room) Handle(e event.Event) {
 
 	log.Printf("event in room: Type: %v, ", eType)
 
-	switch eType.GetEventType() {
+	switch eType {
 	case event.EventTypeMove:
-		eMove, _ := eType.(EventMove)
+		eMove, _ := e.(EventMove)
 
 		err := room.handleMove(eMove)
 		if err != nil {
@@ -93,15 +93,14 @@ func (room *Room) Handle(e event.Event) {
 		}
 
 	case event.EventTypeExit:
-		eExit, _ := eType.(EventExit)
+		eExit, _ := e.(EventExit)
 		opponent := room.GetOpponent(eExit.Player.playerID)
 
 		eExit.RoomUUID = room.GetUUID()
 		eExit.OpponentConnId = opponent.connectionID
 		room.gameEndWinHandler(eExit.OpponentConnId, eExit.ConnectionId)
-		e := event.CreateEvent(eExit)
 
-		room.nextHandler.Handle(e)
+		room.nextHandler.Handle(eExit)
 
 	default:
 		room.nextHandler.Handle(e)
@@ -138,10 +137,10 @@ func (room *Room) handleMove(eMove EventMove) error {
 		return err
 	}
 
-	room.nextHandler.Handle(event.CreateEvent(EventSendMessage{
+	room.nextHandler.Handle(EventSendMessage{
 		ConnectionId: eMove.Player.connectionID,
 		Msg: *resMsg,
-	}))
+	})
 
 	if err != nil {
 		return err
@@ -157,10 +156,10 @@ func (room *Room) handleMove(eMove EventMove) error {
 		if err != nil {
 			return err
 		}
-		room.nextHandler.Handle(event.CreateEvent(EventSendMessage{
+		room.nextHandler.Handle(EventSendMessage{
 			ConnectionId: opponent.connectionID,
 			Msg: *msgForOpponent,
-		}))
+		})
 
 		if err != nil {
 			return err
@@ -212,10 +211,10 @@ func (room *Room) gameEndWinHandler(winner, loser uuid.UUID) error {
 		return err
 	} 
 
-	room.nextHandler.Handle(event.CreateEvent(EventSendMessage{
+	room.nextHandler.Handle(EventSendMessage{
 		ConnectionId: winner,
 		Msg: *winMsg,
-	}))
+	})
 
 	if err != nil {
 		return err
@@ -230,10 +229,10 @@ func (room *Room) gameEndWinHandler(winner, loser uuid.UUID) error {
 		return err
 	} 
 
-	room.nextHandler.Handle(event.CreateEvent(EventSendMessage{
+	room.nextHandler.Handle(EventSendMessage{
 		ConnectionId: loser,
 		Msg: *loseMsg,
-	}))
+	})
 
 	if err != nil {
 		return err
@@ -251,19 +250,19 @@ func (room *Room) gameEndDrawHandler(c1, c2 uuid.UUID) error {
 		return err
 	} 
 
-	room.nextHandler.Handle(event.CreateEvent(EventSendMessage{
+	room.nextHandler.Handle(EventSendMessage{
 		ConnectionId: c1,
 		Msg: *drawMsg,
-	}))
+	})
 
 	if err != nil {
 		return err
 	}
 
-	room.nextHandler.Handle(event.CreateEvent(EventSendMessage{
+	room.nextHandler.Handle(EventSendMessage{
 		ConnectionId: c2,
 		Msg: *drawMsg,
-	}))
+	})
 
 	if err != nil {
 		return err

@@ -153,14 +153,14 @@ func (srv *Server) eventNotHandled(e event.Event) {
 func (srv *Server) Handle(e event.Event) {
 	eType := e.GetType()
 
-	switch eType.GetEventType() {
+	switch eType {
 	case event.EventTypeSendMessage:
-		eSendMessage, _ := eType.(EventSendMessage)
+		eSendMessage, _ := e.(EventSendMessage)
 
 		srv.sendMessage(eSendMessage.ConnectionId, &eSendMessage.Msg)
 		
 	case event.EventTypeExit:
-		eExit, _ := eType.(EventExit)
+		eExit, _ := e.(EventExit)
 
 		srv.matcher <- srv.connections[eExit.OpponentConnId]
 		srv.DeleteConnection(eExit.ConnectionId)

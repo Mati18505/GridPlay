@@ -26,17 +26,17 @@ type EventSendMessage struct {
 	Msg message.Message
 }
 
-func (eType EventExit) GetEventType() event.EventTypeEnum {
+func (eType EventExit) GetType() event.EventType {
 	return event.EventTypeExit;
 }
-func (eType EventMove) GetEventType() event.EventTypeEnum {
+func (eType EventMove) GetType() event.EventType {
 	return event.EventTypeMove;
 }
-func (eType EventSendMessage) GetEventType() event.EventTypeEnum {
+func (eType EventSendMessage) GetType() event.EventType {
 	return event.EventTypeSendMessage;
 }
 
-func EventTypeFromMessage(msg *message.Message) (event.EventType, error) {
+func EventFromMessage(msg *message.Message) (event.Event, error) {
 	switch message.ClientMsg(msg.Type) {
 	case message.Move:
 		data, err := message.ParseMessage[message.MoveMessage](msg)
