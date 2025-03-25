@@ -101,7 +101,7 @@ func (room *room) loop() {
 				err := room.handleMove(eMove)
 				if err != nil {
 					log.Println(err)
-					log.Printf("cannot handle move for %+v disconnecting...\n", eMove.player)
+					log.Printf("cannot handle move for %+v\n", eMove.player)
 
 					// TODO: refactor handle move function, do i need to end game?
 				}
