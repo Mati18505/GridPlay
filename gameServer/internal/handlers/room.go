@@ -4,6 +4,7 @@ import (
 	"TicTacToe/game"
 	"TicTacToe/game/winState"
 	"errors"
+	"fmt"
 	"log"
 
 	"TicTacToe/gameServer/internal/event"
@@ -85,12 +86,11 @@ func (room *Room) Handle(e event.Event) {
 		eMove, _ := e.(EventMove)
 
 		err := room.handleMove(eMove)
-		if err != nil {
-			log.Println(err)
-			log.Printf("cannot handle move for %+v\n", eMove.Player)
 
-			// TODO: refactor handle move function, do i need to end game?
+		if err != nil {
+			fmt.Printf("Room handle move error: %s", err)
 		}
+		room.checkGameWin(eMove)
 
 	case event.EventTypeExit:
 		eExit, _ := e.(EventExit)
@@ -98,6 +98,7 @@ func (room *Room) Handle(e event.Event) {
 
 		eExit.RoomUUID = room.GetUUID()
 		eExit.OpponentConnId = opponent.connectionID
+
 		room.gameEndWinHandler(eExit.OpponentConnId, eExit.ConnectionId)
 
 		room.nextHandler.Handle(eExit)
@@ -108,6 +109,23 @@ func (room *Room) Handle(e event.Event) {
 }
 
 func (room *Room) handleMove(eMove EventMove) error {
+	err := room.eMovePlayer(eMove)
+	sendErr := room.eMoveSendResponse(err, eMove.Player)
+
+	if err != nil {
+		return err
+	} 
+
+	if sendErr != nil {
+		return sendErr
+	}
+	
+	opponent := room.GetOpponent(eMove.Player.playerID)
+	err = room.eMoveSendMessageToOpponent(eMove, opponent)
+	return err
+}
+
+func (room *Room) eMovePlayer(eMove EventMove) error {
 	// TODO: assert if game don't exist ? (maybe always exist)
 	var err error
 	currPlayer := room.game.GetCurrentRoundPlayer()
@@ -124,10 +142,18 @@ func (room *Room) handleMove(eMove EventMove) error {
 		err = errors.New("not your round, dummy")
 	}
 
+	return err
+}
+
+func (room *Room) eMoveSendResponse(err error, player *Player) error {
+	// TODO: assert player, err != nil
+
 	response := new(message.MoveRes) 
-	if err != nil {	
+
+	if err != nil {
 		response.Approved = false
 		response.Reason = err.Error()
+		log.Printf("cannot handle move for %+v\n%s", player, err)
 	} else {
 		response.Approved = true
 	}
@@ -138,53 +164,43 @@ func (room *Room) handleMove(eMove EventMove) error {
 	}
 
 	room.nextHandler.Handle(EventSendMessage{
-		ConnectionId: eMove.Player.connectionID,
+		ConnectionId: player.connectionID,
 		Msg: *resMsg,
 	})
 
+	return err
+}
+
+func (room *Room) eMoveSendMessageToOpponent(eMove EventMove, opponent *Player) error {
+	msgForOpponent, err := message.MakeMessage(message.TOpponentMove, &message.MoveMessage{
+		X: eMove.X,
+		Y: eMove.Y,
+	})
 	if err != nil {
 		return err
 	}
+	room.nextHandler.Handle(EventSendMessage{
+		ConnectionId: opponent.connectionID,
+		Msg: *msgForOpponent,
+	})
 
-	if response.Approved {
-		opponent := room.GetOpponent(eMove.Player.playerID)
+	return err
+}
+
+func (room *Room) checkGameWin(eMove EventMove) error {
+	wState := room.game.GetWinState()
+	player := eMove.Player
+	opponent := room.GetOpponent(player.playerID)
 	
-		msgForOpponent, err := message.MakeMessage(message.TOpponentMove, &message.MoveMessage{
-			X: eMove.X,
-			Y: eMove.Y,
-		})
-		if err != nil {
-			return err
-		}
-		room.nextHandler.Handle(EventSendMessage{
-			ConnectionId: opponent.connectionID,
-			Msg: *msgForOpponent,
-		})
+	var err error
 
-		if err != nil {
-			return err
-		}
-
-		wState := room.game.GetWinState()
-		
-		if wState == winState.Values.Win {
-			err = room.gameEndWinHandler(eMove.Player.connectionID, opponent.connectionID)
-
-			if err != nil {
-				return err
-			}
-		} else if wState == winState.Values.Draw {
-			err = room.gameEndDrawHandler(eMove.Player.connectionID, opponent.connectionID)
-
-			if err != nil {
-				return err
-			}
-		}
-	} else {
-		return errors.New(response.Reason)
+	if wState == winState.Values.Win {
+		err = room.gameEndWinHandler(player.connectionID, opponent.connectionID)
+	} else if wState == winState.Values.Draw {
+		err = room.gameEndDrawHandler(player.connectionID, opponent.connectionID)
 	}
 
-	return nil
+	return err
 }
 
 // TODO: unit test
