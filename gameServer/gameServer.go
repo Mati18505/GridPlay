@@ -1,28 +1,35 @@
 package gameServer
 
 import (
+	"TicTacToe/gameServer/internal/connection"
+	"TicTacToe/gameServer/internal/event"
+	"TicTacToe/gameServer/internal/handlers"
+	. "TicTacToe/gameServer/internal/handlers"
+	"TicTacToe/gameServer/message"
 	"errors"
 	"log"
+	"net/http"
 	"sync"
 
 	"github.com/google/uuid"
+	"github.com/gorilla/websocket"
 )
 
 type Server struct {
-	connections map[uuid.UUID]*playerConnection
-	rooms       map[uuid.UUID]*room
+	connections map[uuid.UUID]*PlayerConnection
+	rooms       map[uuid.UUID]*handlers.Room
 	mut sync.Mutex
-	matcher chan *playerConnection
-	serverChan chan Event
+	matcher chan *PlayerConnection
+	serverChan chan event.Event
 	stopLoop chan bool
 }
 
 func InitGameServer() *Server {
 	srv := &Server{
-		connections: make(map[uuid.UUID]*playerConnection),
-		rooms: make(map[uuid.UUID]*room),
-		matcher: make(chan *playerConnection, 2),
-		serverChan: make(chan Event),
+		connections: make(map[uuid.UUID]*PlayerConnection),
+		rooms: make(map[uuid.UUID]*Room),
+		matcher: make(chan *PlayerConnection, 2),
+		serverChan: make(chan event.Event),
 		stopLoop: make(chan bool),
 	}
 	return srv
@@ -37,7 +44,7 @@ func (srv *Server) EndLoop() {
 	srv.stopLoop <- true
 }
 
-func (srv *Server) AddConnection(conn *Connection) error {
+func (srv *Server) AddConnection(conn *connection.Connection) error {
 	srv.mut.Lock()
 	defer srv.mut.Unlock()
 
@@ -58,7 +65,7 @@ func (srv *Server) AddConnection(conn *Connection) error {
 
 	log.Printf("connected to %q, uuid:%q\n", conn.GetRemoteIP(), id.String())
 
-	go conn.receiveMessages()
+	go conn.ReceiveMessages()
 	pConn.StartLoop()
 
 	return nil
@@ -73,14 +80,28 @@ func (srv *Server) DeleteConnection(id uuid.UUID) {
 	delete(srv.connections, id)
 }
 
-func (srv *Server) addRoom(room *room) {
+func (srv *Server) HandleConnection(w http.ResponseWriter, r *http.Request) error {
+    socket, err := upgrader.Upgrade(w, r, nil)
+	
+    if err != nil {
+		r.Body.Close() // Is it needed?
+        return err
+    }
+
+	conn := connection.CreateConnection(socket)
+	err = srv.AddConnection(conn)
+
+	return err
+}
+
+func (srv *Server) addRoom(room *handlers.Room) {
 	srv.mut.Lock()
 	defer srv.mut.Unlock()
 
 	srv.rooms[room.GetUUID()] = room
 }
 
-func (srv *Server) createRoom(pConnections [2]*playerConnection) (*room, error) {
+func (srv *Server) createRoom(pConnections [2]*PlayerConnection) (*handlers.Room, error) {
 	log.Println("creating room")
 
 	uuid, err := uuid.NewUUID()
@@ -103,12 +124,12 @@ func (srv *Server) removeRoom(roomUUID uuid.UUID) {
 	delete(srv.rooms, roomUUID)
 }
 
-func (srv *Server) sendMessage(connId uuid.UUID, msg *message) {
+func (srv *Server) sendMessage(connId uuid.UUID, msg *message.Message) {
 	srv.mut.Lock()
 	defer srv.mut.Unlock()
 
-	conn := srv.connections[connId].connection
-	conn.sendMessage(msg)
+	conn := srv.connections[connId].GetConnection()
+	conn.SendMessage(msg)
 }
 
 // Blocking
@@ -117,11 +138,11 @@ func (srv *Server) matchMaker() {
 		c1 := <-srv.matcher
 		c2 := <-srv.matcher
 
-		a1 := c1.connection.sendPing() == nil
-		a2 := c2.connection.sendPing() == nil
+		a1 := c1.GetConnection().SendPing() == nil
+		a2 := c2.GetConnection().SendPing() == nil
 
 		if a1 && a2 {
-			room, err := srv.createRoom([2]*playerConnection{c1, c2})
+			room, err := srv.createRoom([2]*PlayerConnection{c1, c2})
 			
 			if err != nil {
 				log.Printf("cannot create room, err: %s", err)
@@ -138,7 +159,7 @@ func (srv *Server) matchMaker() {
 	}
 }
 
-func (srv *Server) eventNotHandled(e Event) {
+func (srv *Server) eventNotHandled(e event.Event) {
 	// TODO: Check if it's logged correctly.
 	log.Printf("event not handled: %+v", e)
 }
@@ -151,18 +172,18 @@ func (srv *Server) loop() {
 			eType := e.GetType()
 
 			switch eType.GetEventType() {
-			case EventTypeSendMessage:
+			case event.EventTypeSendMessage:
 				eSendMessage, _ := eType.(EventSendMessage)
 
-				srv.sendMessage(eSendMessage.connectionId, &eSendMessage.msg)
+				srv.sendMessage(eSendMessage.ConnectionId, &eSendMessage.Msg)
 				
-			case EventTypeExit:
+			case event.EventTypeExit:
 				eExit, _ := eType.(EventExit)
 
-				srv.matcher <- srv.connections[eExit.opponentConnId]
-				srv.DeleteConnection(eExit.connectionId)
+				srv.matcher <- srv.connections[eExit.OpponentConnId]
+				srv.DeleteConnection(eExit.ConnectionId)
 				log.Println("removing room")
-				srv.removeRoom(eExit.roomUUID)
+				srv.removeRoom(eExit.RoomUUID)
 
 			default:
 				srv.eventNotHandled(e)
@@ -171,4 +192,12 @@ func (srv *Server) loop() {
 			break LOOP
 		}
 	}
+}
+
+var upgrader = websocket.Upgrader {
+	ReadBufferSize:  2048,
+	WriteBufferSize: 2048,
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
 }

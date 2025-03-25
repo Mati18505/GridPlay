@@ -1,4 +1,4 @@
-package gameServer
+package message
 
 import (
 	"encoding/json"
@@ -7,27 +7,27 @@ import (
 	"reflect"
 )
 
-type message struct {
+type Message struct {
 	Type int `json:"type"`
 	Data json.RawMessage `json:"data"`
 }
 
-type moveMessage struct {
+type MoveMessage struct {
 	X int `json:"x"`
 	Y int `json:"y"`
 }
 
-type matchStarted struct {
+type MatchStarted struct {
 	Char rune `json:"char"`
 	OpponentChar rune `json:"opponentChar"`
 }
 
-type moveRes struct {
+type MoveRes struct {
 	Approved        bool   `json:"approved"`
 	Reason string `json:"reason"`
 }
 
-type winMessage struct {
+type WinMessage struct {
 	Status string `json:"status"`
 	Cause string `json:"cause"`
 }
@@ -38,11 +38,11 @@ type NotAllowedErrMessage struct {
 
 // From server
 const (
-	MatchStarted = iota
-	MoveAns
-	OpponentMove
-	WinEvent
-	NotAllowedErr
+	TMatchStarted = iota
+	TMoveAns
+	TOpponentMove
+	TWinEvent
+	TNotAllowedErr
 )
 
 // From client
@@ -60,8 +60,8 @@ func (msgT ClientMsg) String() string  {
 	}
 }
 
-func UnmarshalMessage(bytes []byte) (*message, error) {
-	msg := new(message)
+func UnmarshalMessage(bytes []byte) (*Message, error) {
+	msg := new(Message)
 
 	err := json.Unmarshal(bytes, &msg)
 	if err != nil {
@@ -71,7 +71,7 @@ func UnmarshalMessage(bytes []byte) (*message, error) {
 	return msg, nil
 }
 
-func MarshallMessage(msg *message) ([]byte, error) {
+func MarshallMessage(msg *Message) ([]byte, error) {
 	bytes, err := json.Marshal(&msg)
 	if err != nil {
 		return nil, errors.New("can't marshall message")
@@ -79,18 +79,18 @@ func MarshallMessage(msg *message) ([]byte, error) {
 	return bytes, nil
 }
 
-func MakeMessage[T any](msgType int, msgData *T) (*message, error) {
+func MakeMessage[T any](msgType int, msgData *T) (*Message, error) {
 	data, err := json.Marshal(msgData)
 	if err != nil {
 		return nil, err
 	}
-	return &message{
+	return &Message{
 		Type: msgType,
 		Data: data,
 	}, nil
 }
 
-func ParseMessage[T any](msg *message) (*T, error) {
+func ParseMessage[T any](msg *Message) (*T, error) {
 	result := new(T)
 
 	err := json.Unmarshal(msg.Data, &result)

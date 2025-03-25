@@ -1,42 +1,44 @@
-package gameServer
+package handlers
 
 import (
 	"log"
 
 	"github.com/google/uuid"
+
+	"TicTacToe/gameServer/internal/event"
 )
 
-type player struct {
+type Player struct {
 	connectionID uuid.UUID
 	playerID int
-	roomChan chan<- Event
-	playerChan chan Event
+	roomChan chan<- event.Event
+	playerChan chan event.Event
 	stopLoop chan bool
 }
 
-func CreatePlayer(connId uuid.UUID, playerId int, roomChan chan<- Event) player {
-	return player{
+func CreatePlayer(connId uuid.UUID, playerId int, roomChan chan<- event.Event) Player {
+	return Player{
 		connectionID: connId,
 		playerID: playerId,
 		roomChan: roomChan,
-		playerChan: make(chan Event),
+		playerChan: make(chan event.Event),
 		stopLoop: make(chan bool),
 	}
 }
 
-func (player *player) StartLoop() {
+func (player *Player) StartLoop() {
 	go player.loop()
 }
 
-func (player *player) EndLoop() {
+func (player *Player) EndLoop() {
 	player.stopLoop <- true
 }
 
-func (player *player) GetPlayerChan() chan<-Event {
+func (player *Player) GetPlayerChan() chan<-event.Event {
 	return player.playerChan
 }
 
-func (player *player) loop() {
+func (player *Player) loop() {
 	LOOP:
 	for {
 		select {
@@ -46,19 +48,19 @@ func (player *player) loop() {
 			log.Printf("event in player: Type: %v, ", eType)
 
 			switch eType.GetEventType() {
-			case EventTypeMove:
+			case event.EventTypeMove:
 				eMove, _ := eType.(EventMove)
 
-				eMove.player = player
-				e := CreateEvent(eMove)
+				eMove.Player = player
+				e := event.CreateEvent(eMove)
 
 				player.sendEventToRoomChan(e)
 
-			case EventTypeExit:
+			case event.EventTypeExit:
 				eExit, _ := eType.(EventExit)
 
-				eExit.player = player
-				e := CreateEvent(eExit)
+				eExit.Player = player
+				e := event.CreateEvent(eExit)
 
 				player.sendEventToRoomChan(e)
 
@@ -71,7 +73,7 @@ func (player *player) loop() {
 	}
 }
 
-func (player *player) sendEventToRoomChan(e Event) {
+func (player *Player) sendEventToRoomChan(e event.Event) {
 	if player.roomChan == nil {
 		// TODO: assert
 		log.Fatalf("I shouldn't be here.")

@@ -1,4 +1,4 @@
-package gameServer
+package handlers
 
 import (
 	"TicTacToe/game"
@@ -6,23 +6,26 @@ import (
 	"errors"
 	"log"
 
+	"TicTacToe/gameServer/internal/event"
+	"TicTacToe/gameServer/message"
+
 	"github.com/google/uuid"
 )
 
-type room struct {
+type Room struct {
 	uuid uuid.UUID
 	game        *game.Game
-	players [2]player
-	serverChan chan<- Event
-	roomChan chan Event
+	players [2]Player
+	serverChan chan<- event.Event
+	roomChan chan event.Event
 	stopLoop chan bool
 }
 
-func CreateRoom(pConnections [2]*playerConnection, uuid uuid.UUID, serverChan chan<- Event) *room {
-	room := &room{
+func CreateRoom(pConnections [2]*PlayerConnection, uuid uuid.UUID, serverChan chan<- event.Event) *Room {
+	room := &Room{
 		uuid: uuid,
 		serverChan: serverChan,
-		roomChan: make(chan Event),
+		roomChan: make(chan event.Event),
 		stopLoop: make(chan bool),
 	}
 
@@ -32,24 +35,24 @@ func CreateRoom(pConnections [2]*playerConnection, uuid uuid.UUID, serverChan ch
 	return room
 }
 
-func (room *room) StartLoop() {
+func (room *Room) StartLoop() {
 	go room.loop()
 }
 
-func (room *room) EndLoop() {
+func (room *Room) EndLoop() {
 	room.stopLoop <- true
 }
 
-func (room *room) GetUUID() uuid.UUID {
+func (room *Room) GetUUID() uuid.UUID {
 	return room.uuid
 }
 
-func (room *room) createPlayers(pConnections [2]*playerConnection) {
+func (room *Room) createPlayers(pConnections [2]*PlayerConnection) {
 	room.players[0] = room.createPlayer(pConnections[0], 0)
 	room.players[1] = room.createPlayer(pConnections[1], 1)
 }
 
-func (room *room) createPlayer(pConn *playerConnection, playerId int) player {
+func (room *Room) createPlayer(pConn *PlayerConnection, playerId int) Player {
 	player := CreatePlayer(pConn.id, playerId, room.roomChan)
 	pConn.playerChan = player.GetPlayerChan()
 	player.StartLoop()
@@ -57,19 +60,19 @@ func (room *room) createPlayer(pConn *playerConnection, playerId int) player {
 	return player
 }
 
-func (room *room) createGame() {
+func (room *Room) createGame() {
 	room.game = game.CreateGame()
 
 	room.sendMatchStartedMessage(room.players[0])
 	room.sendMatchStartedMessage(room.players[1])
 }
 
-func (room *room) sendMatchStartedMessage(player player) {
+func (room *Room) sendMatchStartedMessage(player Player) {
 	gamePlayer := room.game.GetPlayerWithId(player.playerID)
 	playerChar := gamePlayer.GetChar()
 	opponentChar := game.OpponentChar(playerChar)
 
-	matchStartMsg, err := MakeMessage(MatchStarted, &matchStarted{
+	matchStartMsg, err := message.MakeMessage(message.TMatchStarted, &message.MatchStarted{
 		Char: rune(playerChar),
 		OpponentChar: rune(opponentChar),
 	})
@@ -79,13 +82,13 @@ func (room *room) sendMatchStartedMessage(player player) {
 		// TODO: what now?
 	}
 
-	err = room.sendEventToServerChan(CreateEvent(EventSendMessage{
-		connectionId: player.connectionID,
-		msg: *matchStartMsg,
+	err = room.sendEventToServerChan(event.CreateEvent(EventSendMessage{
+		ConnectionId: player.connectionID,
+		Msg: *matchStartMsg,
 	}))
 }
 
-func (room *room) loop() {
+func (room *Room) loop() {
 	LOOP:
 	for {
 		select {
@@ -95,28 +98,28 @@ func (room *room) loop() {
 			log.Printf("event in room: Type: %v, ", eType)
 
 			switch eType.GetEventType() {
-			case EventTypeMove:
+			case event.EventTypeMove:
 				eMove, _ := eType.(EventMove)
 
 				err := room.handleMove(eMove)
 				if err != nil {
 					log.Println(err)
-					log.Printf("cannot handle move for %+v\n", eMove.player)
+					log.Printf("cannot handle move for %+v\n", eMove.Player)
 
 					// TODO: refactor handle move function, do i need to end game?
 				}
 
-			case EventTypeExit:
+			case event.EventTypeExit:
 				eExit, _ := eType.(EventExit)
-				opponent := room.GetOpponent(eExit.player.playerID)
+				opponent := room.GetOpponent(eExit.Player.playerID)
 
-				eExit.player.EndLoop()
+				eExit.Player.EndLoop()
 				opponent.EndLoop()
 
-				eExit.roomUUID = room.GetUUID()
-				eExit.opponentConnId = opponent.connectionID
-				room.gameEndWinHandler(eExit.opponentConnId, eExit.connectionId)
-				e := CreateEvent(eExit)
+				eExit.RoomUUID = room.GetUUID()
+				eExit.OpponentConnId = opponent.connectionID
+				room.gameEndWinHandler(eExit.OpponentConnId, eExit.ConnectionId)
+				e := event.CreateEvent(eExit)
 
 				room.sendEventToServerChan(e)
 
@@ -129,7 +132,7 @@ func (room *room) loop() {
 	}
 }
 
-func (room *room) sendEventToServerChan(e Event) error {
+func (room *Room) sendEventToServerChan(e event.Event) error {
 	if room.serverChan == nil {
 		// TODO: assert
 		log.Fatalf("I shouldn't be here.")
@@ -140,24 +143,24 @@ func (room *room) sendEventToServerChan(e Event) error {
 	return nil
 }
 
-func (room *room) handleMove(eMove EventMove) error {
+func (room *Room) handleMove(eMove EventMove) error {
 	// TODO: assert if game don't exist ? (maybe always exist)
 	var err error
 	currPlayer := room.game.GetCurrentRoundPlayer()
 
-	gamePlayer := room.game.GetPlayerWithId(eMove.player.playerID)
+	gamePlayer := room.game.GetPlayerWithId(eMove.Player.playerID)
 
 	if err != nil {
 		return err
 	}
 
 	if currPlayer == gamePlayer {
-		err = room.game.Move(game.Pos{X: eMove.x, Y: eMove.y})
+		err = room.game.Move(game.Pos{X: eMove.X, Y: eMove.Y})
 	} else {
 		err = errors.New("not your round, dummy")
 	}
 
-	response := new(moveRes) 
+	response := new(message.MoveRes) 
 	if err != nil {	
 		response.Approved = false
 		response.Reason = err.Error()
@@ -165,14 +168,14 @@ func (room *room) handleMove(eMove EventMove) error {
 		response.Approved = true
 	}
 
-	resMsg, err := MakeMessage(int(MoveAns), response) 
+	resMsg, err := message.MakeMessage(int(message.TMoveAns), response) 
 	if err != nil {
 		return err
 	}
 
-	err = room.sendEventToServerChan(CreateEvent(EventSendMessage{
-		connectionId: eMove.player.connectionID,
-		msg: *resMsg,
+	err = room.sendEventToServerChan(event.CreateEvent(EventSendMessage{
+		ConnectionId: eMove.Player.connectionID,
+		Msg: *resMsg,
 	}))
 
 	if err != nil {
@@ -180,19 +183,19 @@ func (room *room) handleMove(eMove EventMove) error {
 	}
 
 	if response.Approved {
-		opponent := room.GetOpponent(eMove.player.playerID)
+		opponent := room.GetOpponent(eMove.Player.playerID)
 	
-		msgForOpponent, err := MakeMessage(OpponentMove, &moveMessage{
-			X: eMove.x,
-			Y: eMove.y,
+		msgForOpponent, err := message.MakeMessage(message.TOpponentMove, &message.MoveMessage{
+			X: eMove.X,
+			Y: eMove.Y,
 		})
 		if err != nil {
 			return err
 		}
 
-		err = room.sendEventToServerChan(CreateEvent(EventSendMessage{
-			connectionId: opponent.connectionID,
-			msg: *msgForOpponent,
+		err = room.sendEventToServerChan(event.CreateEvent(EventSendMessage{
+			ConnectionId: opponent.connectionID,
+			Msg: *msgForOpponent,
 		}))
 
 		if err != nil {
@@ -202,13 +205,13 @@ func (room *room) handleMove(eMove EventMove) error {
 		wState := room.game.GetWinState()
 		
 		if wState == winState.Values.Win {
-			err = room.gameEndWinHandler(eMove.player.connectionID, opponent.connectionID)
+			err = room.gameEndWinHandler(eMove.Player.connectionID, opponent.connectionID)
 
 			if err != nil {
 				return err
 			}
 		} else if wState == winState.Values.Draw {
-			err = room.gameEndDrawHandler(eMove.player.connectionID, opponent.connectionID)
+			err = room.gameEndDrawHandler(eMove.Player.connectionID, opponent.connectionID)
 
 			if err != nil {
 				return err
@@ -222,7 +225,7 @@ func (room *room) handleMove(eMove EventMove) error {
 }
 
 // TODO: unit test
-func (room *room) GetOpponent(playerID int) *player {
+func (room *Room) GetOpponent(playerID int) *Player {
 	// TODO: assert if game don't exist ? (maybe always exist)
 	var opponentId int
 
@@ -236,8 +239,8 @@ func (room *room) GetOpponent(playerID int) *player {
 	return &room.players[opponentId]
 }
 
-func (room *room) gameEndWinHandler(winner, loser uuid.UUID) error {
-	winMsg, err := MakeMessage(WinEvent, &winMessage{
+func (room *Room) gameEndWinHandler(winner, loser uuid.UUID) error {
+	winMsg, err := message.MakeMessage(message.TWinEvent, &message.WinMessage{
 		Status: "win",
 		Cause: "",
 	})
@@ -245,16 +248,16 @@ func (room *room) gameEndWinHandler(winner, loser uuid.UUID) error {
 		return err
 	} 
 
-	err = room.sendEventToServerChan(CreateEvent(EventSendMessage{
-		connectionId: winner,
-		msg: *winMsg,
+	err = room.sendEventToServerChan(event.CreateEvent(EventSendMessage{
+		ConnectionId: winner,
+		Msg: *winMsg,
 	}))
 
 	if err != nil {
 		return err
 	}
 	
-	loseMsg, err := MakeMessage(WinEvent, &winMessage{
+	loseMsg, err := message.MakeMessage(message.TWinEvent, &message.WinMessage{
 		Status: "lose",
 		Cause: "",
 	})
@@ -263,9 +266,9 @@ func (room *room) gameEndWinHandler(winner, loser uuid.UUID) error {
 		return err
 	} 
 
-	err = room.sendEventToServerChan(CreateEvent(EventSendMessage{
-		connectionId: loser,
-		msg: *loseMsg,
+	err = room.sendEventToServerChan(event.CreateEvent(EventSendMessage{
+		ConnectionId: loser,
+		Msg: *loseMsg,
 	}))
 
 	if err != nil {
@@ -275,8 +278,8 @@ func (room *room) gameEndWinHandler(winner, loser uuid.UUID) error {
 	return nil
 }
 
-func (room *room) gameEndDrawHandler(c1, c2 uuid.UUID) error {
-	drawMsg, err := MakeMessage(WinEvent, &winMessage{
+func (room *Room) gameEndDrawHandler(c1, c2 uuid.UUID) error {
+	drawMsg, err := message.MakeMessage(message.TWinEvent, &message.WinMessage{
 		Status: "draw",
 		Cause: "",
 	})
@@ -284,18 +287,18 @@ func (room *room) gameEndDrawHandler(c1, c2 uuid.UUID) error {
 		return err
 	} 
 
-	err = room.sendEventToServerChan(CreateEvent(EventSendMessage{
-		connectionId: c1,
-		msg: *drawMsg,
+	err = room.sendEventToServerChan(event.CreateEvent(EventSendMessage{
+		ConnectionId: c1,
+		Msg: *drawMsg,
 	}))
 
 	if err != nil {
 		return err
 	}
 
-	err = room.sendEventToServerChan(CreateEvent(EventSendMessage{
-		connectionId: c2,
-		msg: *drawMsg,
+	err = room.sendEventToServerChan(event.CreateEvent(EventSendMessage{
+		ConnectionId: c2,
+		Msg: *drawMsg,
 	}))
 
 	if err != nil {

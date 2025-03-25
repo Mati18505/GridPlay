@@ -1,27 +1,29 @@
-package gameServer
+package connection
 
 import (
 	"log"
+
+	"TicTacToe/gameServer/message"
 
 	"github.com/gorilla/websocket"
 )
 
 type Connection struct {
 	socket  *websocket.Conn
-	messageFromClient chan *message
+	messageFromClient chan *message.Message
 	exitChan chan bool
 }
 
 func CreateConnection(socket  *websocket.Conn) *Connection {
 	return &Connection{
 		socket: socket,
-		messageFromClient: make(chan *message),
+		messageFromClient: make(chan *message.Message),
 		exitChan: make(chan bool),
 	}
 }
 
 // Blocking
-func (conn *Connection) receiveMessages() {
+func (conn *Connection) ReceiveMessages() {
 	for {
 		_, data, err := conn.socket.ReadMessage()
 		if err != nil {
@@ -30,7 +32,7 @@ func (conn *Connection) receiveMessages() {
 			break;
 		}
 
-		msg, err := UnmarshalMessage(data)
+		msg, err := message.UnmarshalMessage(data)
 		if err != nil {
 			log.Println("cannot unmarshal message received from ", conn.GetRemoteIP())
 			continue
@@ -40,8 +42,8 @@ func (conn *Connection) receiveMessages() {
 	}
 }
 
-func (conn *Connection) sendMessage(msg *message) error {
-	data, err := MarshallMessage(msg)
+func (conn *Connection) SendMessage(msg *message.Message) error {
+	data, err := message.MarshallMessage(msg)
 	if err != nil {
 		return err
 	}
@@ -50,15 +52,23 @@ func (conn *Connection) sendMessage(msg *message) error {
 	return err
 }
 
-func (conn *Connection) sendPing() error {
+func (conn *Connection) SendPing() error {
 	return conn.socket.WriteMessage(websocket.PingMessage, []byte("ping"))
 }
 
-func (conn *Connection) close() {
+func (conn *Connection) Close() {
 	// TODO: Wait until messages are send?
 	conn.socket.Close()
 }
 
 func (conn *Connection) GetRemoteIP() string {
 	return conn.socket.NetConn().RemoteAddr().String();
+}
+
+func (conn *Connection) GetMessageFromClient() <-chan *message.Message {
+	return conn.messageFromClient
+}
+
+func (conn *Connection) GetExitChan() <-chan bool {
+	return conn.exitChan
 }
