@@ -99,12 +99,18 @@ func (room *Room) Handle(e event.Event) {
 		eExit.RoomUUID = room.GetUUID()
 		eExit.OpponentConnId = opponent.connectionID
 
-		room.gameEndWinHandler(eExit.OpponentConnId, eExit.ConnectionId)
+		room.handleExit(eExit)
 
 		room.nextHandler.Handle(eExit)
 
 	default:
 		room.nextHandler.Handle(e)
+	}
+}
+
+func (room *Room) handleExit(eExit EventExit) {
+	if room.game.GetWinState() == winState.Values.None {
+		room.gameEndWinHandler(eExit.OpponentConnId, eExit.ConnectionId)
 	}
 }
 

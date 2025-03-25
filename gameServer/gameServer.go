@@ -115,6 +115,7 @@ func (srv *Server) sendMessage(connId uuid.UUID, msg *message.Message) {
 	defer srv.mut.Unlock()
 
 	conn := srv.connections[connId].GetConnection()
+	// TODO: Check this error!
 	conn.SendMessage(msg)
 }
 
@@ -162,6 +163,7 @@ func (srv *Server) Handle(e event.Event) {
 	case event.EventTypeExit:
 		eExit, _ := e.(EventExit)
 
+		// TODO: Get connection via mut lock.
 		srv.matcher <- srv.connections[eExit.OpponentConnId]
 		srv.DeleteConnection(eExit.ConnectionId)
 		log.Println("removing room")
