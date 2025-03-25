@@ -20,8 +20,6 @@ type Server struct {
 	rooms       map[uuid.UUID]*handlers.Room
 	mut sync.Mutex
 	matcher chan *PlayerConnection
-	serverChan chan event.Event
-	stopLoop chan bool
 }
 
 func InitGameServer() *Server {
@@ -29,19 +27,10 @@ func InitGameServer() *Server {
 		connections: make(map[uuid.UUID]*PlayerConnection),
 		rooms: make(map[uuid.UUID]*Room),
 		matcher: make(chan *PlayerConnection, 2),
-		serverChan: make(chan event.Event),
-		stopLoop: make(chan bool),
 	}
-	return srv
-}
-
-func (srv *Server) StartLoop() {
 	go srv.matchMaker()
-	go srv.loop()
-}
 
-func (srv *Server) EndLoop() {
-	srv.stopLoop <- true
+	return srv
 }
 
 func (srv *Server) AddConnection(conn *connection.Connection) error {
@@ -58,7 +47,7 @@ func (srv *Server) AddConnection(conn *connection.Connection) error {
 		return errors.New("Connection with this id is already in the map")
 	}
 
-	pConn := CreatePlayerConnection(id, conn, srv.serverChan)
+	pConn := CreatePlayerConnection(srv, id, conn)
 
 	srv.connections[id] = pConn
 	srv.matcher <- pConn
@@ -109,17 +98,14 @@ func (srv *Server) createRoom(pConnections [2]*PlayerConnection) (*handlers.Room
 		return nil, errors.New("cannot generate uuid for this room")
 	}
 
-	room := CreateRoom(pConnections, uuid, srv.serverChan)
+	room := CreateRoom(srv, pConnections, uuid)
 
-	room.StartLoop()
 	return room, nil
 }
 
 func (srv *Server) removeRoom(roomUUID uuid.UUID) {
 	srv.mut.Lock()
 	defer srv.mut.Unlock()
-
-	srv.rooms[roomUUID].EndLoop()
 
 	delete(srv.rooms, roomUUID)
 }
@@ -164,33 +150,25 @@ func (srv *Server) eventNotHandled(e event.Event) {
 	log.Printf("event not handled: %+v", e)
 }
 
-func (srv *Server) loop() {
-	LOOP:
-	for {
-		select {
-		case e := <-srv.serverChan:
-			eType := e.GetType()
+func (srv *Server) Handle(e event.Event) {
+	eType := e.GetType()
 
-			switch eType.GetEventType() {
-			case event.EventTypeSendMessage:
-				eSendMessage, _ := eType.(EventSendMessage)
+	switch eType.GetEventType() {
+	case event.EventTypeSendMessage:
+		eSendMessage, _ := eType.(EventSendMessage)
 
-				srv.sendMessage(eSendMessage.ConnectionId, &eSendMessage.Msg)
-				
-			case event.EventTypeExit:
-				eExit, _ := eType.(EventExit)
+		srv.sendMessage(eSendMessage.ConnectionId, &eSendMessage.Msg)
+		
+	case event.EventTypeExit:
+		eExit, _ := eType.(EventExit)
 
-				srv.matcher <- srv.connections[eExit.OpponentConnId]
-				srv.DeleteConnection(eExit.ConnectionId)
-				log.Println("removing room")
-				srv.removeRoom(eExit.RoomUUID)
+		srv.matcher <- srv.connections[eExit.OpponentConnId]
+		srv.DeleteConnection(eExit.ConnectionId)
+		log.Println("removing room")
+		srv.removeRoom(eExit.RoomUUID)
 
-			default:
-				srv.eventNotHandled(e)
-			}
-		case <- srv.stopLoop:
-			break LOOP
-		}
+	default:
+		srv.eventNotHandled(e)
 	}
 }
 

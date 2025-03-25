@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"errors"
 	"log"
 
 	"TicTacToe/gameServer/internal/connection"
@@ -12,19 +11,19 @@ import (
 )
 
 type PlayerConnection struct {
+	nextHandler Handler
+	serverHandler Handler
 	id uuid.UUID
 	connection *connection.Connection
-	playerChan chan<- event.Event
-	serverChan chan<- event.Event
 	stopLoop chan bool
 }
 
-func CreatePlayerConnection(uuid uuid.UUID, conn *connection.Connection, serverChan chan<- event.Event) *PlayerConnection {
+func CreatePlayerConnection(serverHandler Handler, uuid uuid.UUID, conn *connection.Connection) *PlayerConnection {
 	return &PlayerConnection{
+		nextHandler: nil,
+		serverHandler: serverHandler,
 		id: uuid,
 		connection: conn,
-		playerChan: nil,
-		serverChan: serverChan,
 		stopLoop: make(chan bool),
 	}
 }
@@ -39,6 +38,29 @@ func (playerConn *PlayerConnection) EndLoop() {
 
 func (playerConn *PlayerConnection) GetConnection() *connection.Connection {
 	return playerConn.connection;
+}
+
+func (playerConn *PlayerConnection) SetNextHandler(nextHandler Handler) {
+	playerConn.nextHandler = nextHandler
+}
+
+func (pConn *PlayerConnection) Handle(e event.Event) {
+	if pConn.nextHandler != nil {
+		pConn.nextHandler.Handle(e)
+	} else {
+		log.Printf("cannot do this while game is not running")
+
+		message, err := message.MakeMessage(message.TNotAllowedErr, &message.NotAllowedErrMessage{
+			Reason: "cannot do this while game is not running",
+		})
+
+		if err != nil {
+			log.Print("cannot make not allowed err message")
+			// TODO: What now?
+		}
+
+		pConn.connection.SendMessage(message)
+	}
 }
 
 func (pConn *PlayerConnection) loop() {
@@ -62,22 +84,7 @@ func (pConn *PlayerConnection) loop() {
 			e := event.CreateEvent(eType)
 
 			log.Printf("playerConnection: Created event %+v", e)
-
-			err = pConn.sendEventToPlayerChan(e)
-				
-			if err != nil {
-				message, err := message.MakeMessage(message.TNotAllowedErr, &message.NotAllowedErrMessage{
-					Reason: "cannot do this while game is not running",
-				})
-
-				if err != nil {
-					log.Print("cannot make not allowed err message")
-					continue;
-				}
-	
-				conn.SendMessage(message)
-				log.Printf("cannot do this while game is not running")
-			}
+			pConn.Handle(e)
 
 		case <- conn.GetExitChan():
 			log.Printf("disconnected from %q\n", remoteIP)
@@ -86,27 +93,17 @@ func (pConn *PlayerConnection) loop() {
 			e := event.CreateEvent(EventExit{
 				ConnectionId: pConn.id,
 			})
-			err := pConn.sendEventToPlayerChan(e)
 
-			if err != nil {
-				e := event.CreateEvent(EventExit{
-					ConnectionId: pConn.id,
-				})
-				pConn.serverChan <- e
+			if pConn.nextHandler != nil {
+				pConn.nextHandler.Handle(e)
+			} else {
+				pConn.serverHandler.Handle(e)
 			}
 
 			break LOOP
+
 		case <- pConn.stopLoop:
 			break LOOP
 		}
 	}
-}
-
-func (pConn *PlayerConnection) sendEventToPlayerChan(e event.Event) error {
-	if pConn.playerChan == nil {
-		return errors.New("player connection channel does not exist")
-	}
-
-	pConn.playerChan <- e
-	return nil
 }

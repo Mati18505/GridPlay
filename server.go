@@ -19,14 +19,12 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	srv = gameServer.InitGameServer()
-	srv.StartLoop()
 
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	http.HandleFunc("/ws", handleConnections)
 
 	e := http.ListenAndServe(":4000", nil)
 
-	srv.EndLoop()
 	if e != nil {
 		log.Fatal("ListenAndServe: ", e)
 	}

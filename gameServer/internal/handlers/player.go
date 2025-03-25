@@ -9,76 +9,44 @@ import (
 )
 
 type Player struct {
+	nextHandler Handler
 	connectionID uuid.UUID
 	playerID int
-	roomChan chan<- event.Event
 	playerChan chan event.Event
-	stopLoop chan bool
 }
 
-func CreatePlayer(connId uuid.UUID, playerId int, roomChan chan<- event.Event) Player {
+func CreatePlayer(nextHandler Handler, connId uuid.UUID, playerId int) Player {
 	return Player{
+		nextHandler: nextHandler,
 		connectionID: connId,
 		playerID: playerId,
-		roomChan: roomChan,
 		playerChan: make(chan event.Event),
-		stopLoop: make(chan bool),
 	}
 }
 
-func (player *Player) StartLoop() {
-	go player.loop()
-}
+func (player *Player) Handle(e event.Event) {
+	eType := e.GetType()
 
-func (player *Player) EndLoop() {
-	player.stopLoop <- true
-}
+	log.Printf("event in player: Type: %v, ", eType)
 
-func (player *Player) GetPlayerChan() chan<-event.Event {
-	return player.playerChan
-}
+	switch eType.GetEventType() {
+	case event.EventTypeMove:
+		eMove, _ := eType.(EventMove)
 
-func (player *Player) loop() {
-	LOOP:
-	for {
-		select {
-		case e := <-player.playerChan:
-			eType := e.GetType()
+		eMove.Player = player
+		e := event.CreateEvent(eMove)
 
-			log.Printf("event in player: Type: %v, ", eType)
+		player.nextHandler.Handle(e)
 
-			switch eType.GetEventType() {
-			case event.EventTypeMove:
-				eMove, _ := eType.(EventMove)
+	case event.EventTypeExit:
+		eExit, _ := eType.(EventExit)
 
-				eMove.Player = player
-				e := event.CreateEvent(eMove)
+		eExit.Player = player
+		e := event.CreateEvent(eExit)
 
-				player.sendEventToRoomChan(e)
+		player.nextHandler.Handle(e)
 
-			case event.EventTypeExit:
-				eExit, _ := eType.(EventExit)
-
-				eExit.Player = player
-				e := event.CreateEvent(eExit)
-
-				player.sendEventToRoomChan(e)
-
-			default:
-				player.sendEventToRoomChan(e)
-			}
-		case <- player.stopLoop:
-			break LOOP
-		}
+	default:
+		player.nextHandler.Handle(e)
 	}
-}
-
-func (player *Player) sendEventToRoomChan(e event.Event) {
-	if player.roomChan == nil {
-		// TODO: assert
-		log.Fatalf("I shouldn't be here.")
-		panic("I shouldn't be here.")
-	}
-
-	player.roomChan <- e
 }
