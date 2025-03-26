@@ -44,7 +44,7 @@ func (room *Room) createPlayers(pConnections [2]*PlayerConnection) {
 }
 
 func (room *Room) createPlayer(pConn *PlayerConnection, playerId int) *Player {
-	player := CreatePlayer(room.sync, pConn.id, playerId)
+	player := CreatePlayer(room.sync, pConn.uuid, playerId)
 	pConn.SetNextHandler(&player)
 
 	return &player

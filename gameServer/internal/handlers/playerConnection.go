@@ -13,7 +13,7 @@ import (
 type PlayerConnection struct {
 	nextHandler Handler
 	serverHandler Handler
-	id uuid.UUID
+	uuid uuid.UUID
 	connection *connection.Connection
 	stopLoop chan bool
 }
@@ -22,7 +22,7 @@ func CreatePlayerConnection(serverHandler Handler, uuid uuid.UUID, conn *connect
 	return &PlayerConnection{
 		nextHandler: nil,
 		serverHandler: serverHandler,
-		id: uuid,
+		uuid: uuid,
 		connection: conn,
 		stopLoop: make(chan bool),
 	}
@@ -89,7 +89,7 @@ func (pConn *PlayerConnection) loop() {
 			conn.Close()
 
 			e := EventExit{
-				ConnectionId: pConn.id,
+				ConnectionId: pConn.uuid,
 			}
 
 			if pConn.nextHandler != nil {
