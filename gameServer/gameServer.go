@@ -19,7 +19,7 @@ type Server struct {
 	connections map[uuid.UUID]*PlayerConnection
 	rooms       map[uuid.UUID]*handlers.Room
 	mut sync.Mutex
-	matcher chan *PlayerConnection
+	matcher chan uuid.UUID
 	sync *Synchronizer
 }
 
@@ -27,7 +27,7 @@ func InitGameServer() *Server {
 	srv := &Server{
 		connections: make(map[uuid.UUID]*PlayerConnection),
 		rooms: make(map[uuid.UUID]*Room),
-		matcher: make(chan *PlayerConnection, 2),
+		matcher: make(chan uuid.UUID, 2),
 	}
 	srv.sync = CreateSynchronizer(srv)
 	go srv.matchMaker()
@@ -52,7 +52,7 @@ func (srv *Server) AddConnection(conn *connection.Connection) error {
 	pConn := CreatePlayerConnection(srv.sync, id, conn)
 
 	srv.connections[id] = pConn
-	srv.matcher <- pConn
+	srv.matcher <- id
 
 	log.Printf("connected to %q, uuid:%q\n", conn.GetRemoteIP(), id.String())
 
@@ -135,8 +135,10 @@ func (srv *Server) sendMessage(connId uuid.UUID, msg *message.Message) {
 // Blocking
 func (srv *Server) matchMaker() {
 	for {
-		c1 := <-srv.matcher
-		c2 := <-srv.matcher
+		id1 := <-srv.matcher
+		id2 := <-srv.matcher
+		c1 := srv.getConnection(id1)
+		c2 := srv.getConnection(id2)
 
 		a1 := c1.GetConnection().SendPing() == nil
 		a2 := c2.GetConnection().SendPing() == nil
@@ -146,13 +148,16 @@ func (srv *Server) matchMaker() {
 			
 			if err != nil {
 				log.Printf("cannot create room, err: %s", err)
-				// TODO: what now?
+				// TODO: assert
+				log.Fatalf("I shouldn't be here.")
+				panic("I shouldn't be here.")
 			}
+
 			srv.addRoom(room)
 		} else if !a1 {
-			srv.matcher <- c2
+			srv.matcher <- id2
 		} else if !a2 {
-			srv.matcher <- c1
+			srv.matcher <- id1
 		} else {
 			continue
 		}
@@ -176,8 +181,7 @@ func (srv *Server) Handle(e event.Event) {
 	case event.EventTypeExit:
 		eExit, _ := e.(EventExit)
 
-		// TODO: Get connection via mut lock.
-		srv.matcher <- srv.connections[eExit.OpponentConnId]
+		srv.matcher <- eExit.OpponentConnId
 		srv.DeleteConnection(eExit.ConnectionId)
 		log.Println("removing room")
 		srv.removeRoom(eExit.RoomUUID)
@@ -185,6 +189,13 @@ func (srv *Server) Handle(e event.Event) {
 	default:
 		srv.eventNotHandled(e)
 	}
+}
+
+func (srv *Server) getConnection(id uuid.UUID) *PlayerConnection {
+	srv.mut.Lock()
+	defer srv.mut.Unlock()
+
+	return srv.connections[id]
 }
 
 var upgrader = websocket.Upgrader {
