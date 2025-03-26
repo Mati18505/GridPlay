@@ -63,8 +63,8 @@ func (room *Room) sendMatchStartedMessage(player *Player) {
 	opponentChar := game.OpponentChar(playerChar)
 
 	matchStartMsg, err := message.MakeMessage(message.TMatchStarted, &message.MatchStarted{
-		Char: rune(playerChar),
-		OpponentChar: rune(opponentChar),
+		Char: playerChar.GetRune(),
+		OpponentChar: opponentChar.GetRune(),
 	})
 
 	if err != nil {

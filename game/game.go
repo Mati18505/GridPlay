@@ -18,11 +18,7 @@ func (p *Player) GetID() int {
 }
 
 func (p *Player) GetChar() char {
-	if p.char == x {
-		return 'x'
-	} else {
-		return 'o'
-	}
+	return p.char
 }
 
 type Pos struct {

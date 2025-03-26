@@ -27,3 +27,17 @@ func OpponentChar(c char) char {
 	}
 }
 
+func (c char) GetRune() rune {
+	var r rune
+
+	switch c {
+	case x:
+		r = 'x'
+	case o:
+		r = 'o'
+	case e:
+		r = ' '
+	}
+
+	return r
+}
