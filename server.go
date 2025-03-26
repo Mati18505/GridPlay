@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"time"
 
 	"TicTacToe/gameServer"
 )
@@ -17,8 +18,32 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+var loopStopSignal chan bool
+
+func loop() {
+	for {
+		select {
+		case <- time.After(time.Millisecond * 50):
+			srv.Update()
+		case <- loopStopSignal:
+			return
+		}
+	}
+}
+
+func startLoop() {
+	go loop()
+}
+
+func stopLoop() {
+	loopStopSignal <- true
+}
+
 func main() {
 	srv = gameServer.InitGameServer()
+
+	startLoop()
+	defer stopLoop()
 
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	http.HandleFunc("/ws", handleConnections)

@@ -16,6 +16,7 @@ import (
 type Room struct {
 	nextHandler Handler
 	uuid uuid.UUID
+	sync *Synchronizer
 	game        *game.Game
 	players [2]*Player
 }
@@ -25,6 +26,7 @@ func CreateRoom(nextHandler Handler, pConnections [2]*PlayerConnection, uuid uui
 		nextHandler: nextHandler,
 		uuid: uuid,
 	}
+	room.sync = CreateSynchronizer(room)
 
 	room.createPlayers(pConnections)
 	room.createGame()
@@ -42,7 +44,7 @@ func (room *Room) createPlayers(pConnections [2]*PlayerConnection) {
 }
 
 func (room *Room) createPlayer(pConn *PlayerConnection, playerId int) *Player {
-	player := CreatePlayer(room, pConn.id, playerId)
+	player := CreatePlayer(room.sync, pConn.id, playerId)
 	pConn.SetNextHandler(&player)
 
 	return &player
@@ -74,6 +76,10 @@ func (room *Room) sendMatchStartedMessage(player *Player) {
 		ConnectionId: player.connectionID,
 		Msg: *matchStartMsg,
 	})
+}
+
+func (room *Room) Update() {
+	room.sync.SyncTransferAll(); 
 }
 
 func (room *Room) Handle(e event.Event) { 

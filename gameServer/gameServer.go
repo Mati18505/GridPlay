@@ -20,6 +20,7 @@ type Server struct {
 	rooms       map[uuid.UUID]*handlers.Room
 	mut sync.Mutex
 	matcher chan *PlayerConnection
+	sync *Synchronizer
 }
 
 func InitGameServer() *Server {
@@ -28,6 +29,7 @@ func InitGameServer() *Server {
 		rooms: make(map[uuid.UUID]*Room),
 		matcher: make(chan *PlayerConnection, 2),
 	}
+	srv.sync = CreateSynchronizer(srv)
 	go srv.matchMaker()
 
 	return srv
@@ -83,6 +85,17 @@ func (srv *Server) HandleConnection(w http.ResponseWriter, r *http.Request) erro
 	return err
 }
 
+func (srv *Server) Update() {
+	srv.updateAllRooms()
+	srv.sync.SyncTransferAll()
+}
+
+func (srv *Server) updateAllRooms() {
+	for _, room := range srv.rooms {
+		room.Update()
+	}
+}
+
 func (srv *Server) addRoom(room *handlers.Room) {
 	srv.mut.Lock()
 	defer srv.mut.Unlock()
@@ -98,7 +111,7 @@ func (srv *Server) createRoom(pConnections [2]*PlayerConnection) (*handlers.Room
 		return nil, errors.New("cannot generate uuid for this room")
 	}
 
-	room := CreateRoom(srv, pConnections, uuid)
+	room := CreateRoom(srv.sync, pConnections, uuid)
 
 	return room, nil
 }
