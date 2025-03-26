@@ -3,8 +3,10 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 	"time"
 
+	"TicTacToe/assert"
 	"TicTacToe/gameServer"
 )
 
@@ -40,6 +42,10 @@ func stopLoop() {
 }
 
 func main() {
+	assertFile, err := os.Create("assert.txt")
+	assert.NoError(err, "unable to open assert file")
+	assert.ToWriter(assertFile)
+
 	srv = gameServer.InitGameServer()
 
 	startLoop()
