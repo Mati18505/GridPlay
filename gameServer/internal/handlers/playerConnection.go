@@ -98,8 +98,6 @@ func (pConn *PlayerConnection) loop() {
 				pConn.serverHandler.Handle(e)
 			}
 
-			break LOOP
-
 		case <- pConn.stopLoop:
 			break LOOP
 		}

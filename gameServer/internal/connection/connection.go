@@ -28,7 +28,7 @@ func (conn *Connection) ReceiveMessages() {
 		_, data, err := conn.socket.ReadMessage()
 		if err != nil {
 			log.Printf("connection with %q closed\n", conn.GetRemoteIP())
-			close(conn.exitChan)
+			conn.exitChan <- true
 			break;
 		}
 
