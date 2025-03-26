@@ -44,11 +44,6 @@ func (srv *Server) AddConnection(conn *connection.Connection) error {
 		return errors.New("cannot generate uuid for this connection")
 	}
 
-	_, exist := srv.connections[id]
-	if exist {
-		return errors.New("Connection with this id is already in the map")
-	}
-
 	pConn := CreatePlayerConnection(srv.sync, id, conn)
 
 	srv.connections[id] = pConn
