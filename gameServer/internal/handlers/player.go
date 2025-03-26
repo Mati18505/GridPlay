@@ -12,7 +12,6 @@ type Player struct {
 	nextHandler Handler
 	connectionID uuid.UUID
 	playerID int
-	playerChan chan event.Event
 }
 
 func CreatePlayer(nextHandler Handler, connId uuid.UUID, playerId int) Player {
@@ -20,7 +19,6 @@ func CreatePlayer(nextHandler Handler, connId uuid.UUID, playerId int) Player {
 		nextHandler: nextHandler,
 		connectionID: connId,
 		playerID: playerId,
-		playerChan: make(chan event.Event),
 	}
 }
 
