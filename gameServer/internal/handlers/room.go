@@ -144,10 +144,6 @@ func (room *Room) eMovePlayer(eMove EventMove) error {
 
 	gamePlayer := room.game.GetPlayerWithId(eMove.Player.playerID)
 
-	if err != nil {
-		return err
-	}
-
 	if currPlayer == gamePlayer {
 		err = room.game.Move(game.Pos{X: eMove.X, Y: eMove.Y})
 	} else {
@@ -243,10 +239,6 @@ func (room *Room) gameEndWinHandler(winner, loser uuid.UUID) error {
 		ConnectionId: winner,
 		Msg: *winMsg,
 	})
-
-	if err != nil {
-		return err
-	}
 	
 	loseMsg, err := message.MakeMessage(message.TWinEvent, &message.WinMessage{
 		Status: "lose",
@@ -261,10 +253,6 @@ func (room *Room) gameEndWinHandler(winner, loser uuid.UUID) error {
 		ConnectionId: loser,
 		Msg: *loseMsg,
 	})
-
-	if err != nil {
-		return err
-	}
 
 	return nil
 }
@@ -283,18 +271,10 @@ func (room *Room) gameEndDrawHandler(c1, c2 uuid.UUID) error {
 		Msg: *drawMsg,
 	})
 
-	if err != nil {
-		return err
-	}
-
 	room.nextHandler.Handle(EventSendMessage{
 		ConnectionId: c2,
 		Msg: *drawMsg,
 	})
-
-	if err != nil {
-		return err
-	}
 
 	return nil
 }
