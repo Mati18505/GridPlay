@@ -71,7 +71,7 @@ func UnmarshalMessage(bytes []byte) (*Message, error) {
 	return msg, nil
 }
 
-func MarshallMessage(msg *Message) ([]byte, error) {
+func (msg *Message) MarshallMessage() ([]byte, error) {
 	bytes, err := json.Marshal(&msg)
 	if err != nil {
 		return nil, errors.New("can't marshall message")

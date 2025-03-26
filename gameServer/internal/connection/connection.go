@@ -43,7 +43,7 @@ func (conn *Connection) ReceiveMessages() {
 }
 
 func (conn *Connection) SendMessage(msg *message.Message) error {
-	data, err := message.MarshallMessage(msg)
+	data, err := msg.MarshallMessage()
 	if err != nil {
 		return err
 	}
