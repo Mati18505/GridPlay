@@ -49,7 +49,7 @@ func (srv *Server) AddConnection(conn *connection.Connection) error {
 		return errors.New("Connection with this id is already in the map")
 	}
 
-	pConn := CreatePlayerConnection(srv, id, conn)
+	pConn := CreatePlayerConnection(srv.sync, id, conn)
 
 	srv.connections[id] = pConn
 	srv.matcher <- pConn
