@@ -31,10 +31,12 @@ func CreateRoom(nextHandler Handler, pConnections [2]*PlayerConnection, uuid uui
 		uuid: uuid,
 	}
 	room.sync = CreateSynchronizer(room)
-	assert.NotNil(room.sync, "room sync was nil")
-
 	room.createPlayers(pConnections)
 	room.createGame()
+
+	assert.NotNil(room.sync, "room sync was nil")
+	assert.NotNil(room.game, "game was nil")
+	assert.NotNil(room.players, "players was nil")
 
 	return room
 }
@@ -53,6 +55,7 @@ func (room *Room) createPlayers(pConnections [2]*PlayerConnection) {
 }
 
 func (room *Room) createPlayer(pConn *PlayerConnection, playerId int) *Player {
+	assert.NotNil(room.sync, "room sync was nil")
 	assert.NotNil(pConn, "player connection was nil")
 
 	player := CreatePlayer(room.sync, pConn.uuid, playerId)
@@ -65,15 +68,16 @@ func (room *Room) createGame() {
 	assert.NotNil(room.players, "players array was nil")
 
 	room.game = game.CreateGame()
-	assert.NotNil(room.game, "game was nil")
-
 	room.sendMatchStartedMessage(room.players[0])
 	room.sendMatchStartedMessage(room.players[1])
+
+	assert.NotNil(room.game, "game was nil")
 }
 
 func (room *Room) sendMatchStartedMessage(player *Player) {
 	assert.NotNil(player, "player was nil")
 	assert.NotNil(room.game, "game was nil")
+	assert.NotNil(room.nextHandler, "room next handler was nil")
 
 	gamePlayer := room.game.GetPlayerWithId(player.playerID)
 	playerChar := gamePlayer.GetChar()
@@ -85,8 +89,7 @@ func (room *Room) sendMatchStartedMessage(player *Player) {
 	})
 
 	if err != nil {
-		log.Print("cannot make match started message")
-		// TODO: what now?
+		assert.Never("cannot make match started message")
 	}
 
 	room.nextHandler.Handle(EventSendMessage{
@@ -96,10 +99,14 @@ func (room *Room) sendMatchStartedMessage(player *Player) {
 }
 
 func (room *Room) Update() {
+	assert.NotNil(room.sync, "room sync was nil")
+
 	room.sync.SyncTransferAll(); 
 }
 
 func (room *Room) Handle(e event.Event) { 
+	assert.NotNil(room.nextHandler, "room next handler was nil")
+
 	eType := e.GetType()
 
 	log.Printf("event in room: Type: %v, ", eType)
@@ -122,7 +129,6 @@ func (room *Room) Handle(e event.Event) {
 		assert.NotNil(eExit.Player, "event exit player was nil")
 
 		opponent := room.GetOpponent(eExit.Player.playerID)
-		assert.NotNil(opponent, "opponent was nil")
 
 		eExit.OpponentConnId = opponent.connectionID
 		eExit.RoomUUID = room.GetUUID()
@@ -160,7 +166,6 @@ func (room *Room) handleMove(eMove EventMove) error {
 	}
 	
 	opponent := room.GetOpponent(eMove.Player.playerID)
-	assert.NotNil(opponent, "opponent was nil")
 
 	err = room.eMoveSendMessageToOpponent(eMove, opponent)
 	return err
@@ -185,6 +190,7 @@ func (room *Room) eMovePlayer(eMove EventMove) error {
 
 func (room *Room) eMoveSendResponse(err error, player *Player) error {
 	assert.NotNil(player, "player was nil")
+	assert.NotNil(room.nextHandler, "room next handler was nil")
 
 	response := new(message.MoveRes) 
 
@@ -211,6 +217,7 @@ func (room *Room) eMoveSendResponse(err error, player *Player) error {
 
 func (room *Room) eMoveSendMessageToOpponent(eMove EventMove, opponent *Player) error {
 	assert.NotNil(opponent, "opponent was nil")
+	assert.NotNil(room.nextHandler, "room next handler was nil")
 
 	msgForOpponent, err := message.MakeMessage(message.TOpponentMove, &message.MoveMessage{
 		X: eMove.X,
@@ -219,11 +226,11 @@ func (room *Room) eMoveSendMessageToOpponent(eMove EventMove, opponent *Player) 
 	if err != nil {
 		return err
 	}
+
 	room.nextHandler.Handle(EventSendMessage{
 		ConnectionId: opponent.connectionID,
 		Msg: *msgForOpponent,
 	})
-
 	return err
 }
 
@@ -234,7 +241,6 @@ func (room *Room) checkGameWin(eMove EventMove) error {
 	wState := room.game.GetWinState()
 	player := eMove.Player
 	opponent := room.GetOpponent(player.playerID)
-	assert.NotNil(opponent, "opponent was nil")
 	
 	var err error
 
@@ -262,10 +268,15 @@ func (room *Room) GetOpponent(playerID int) *Player {
 		assert.Never("player id was out of range")
 	}
 
-	return room.players[opponentId]
+	opponent := room.players[opponentId]
+	assert.NotNil(opponent, "opponent was nil")
+
+	return opponent
 }
 
 func (room *Room) gameEndWinHandler(winner, loser uuid.UUID) error {
+	assert.NotNil(room.nextHandler, "room next handler was nil")
+
 	winMsg, err := message.MakeMessage(message.TWinEvent, &message.WinMessage{
 		Status: "win",
 		Cause: "",
@@ -297,6 +308,8 @@ func (room *Room) gameEndWinHandler(winner, loser uuid.UUID) error {
 }
 
 func (room *Room) gameEndDrawHandler(c1, c2 uuid.UUID) error {
+	assert.NotNil(room.nextHandler, "room next handler was nil")
+
 	drawMsg, err := message.MakeMessage(message.TWinEvent, &message.WinMessage{
 		Status: "draw",
 		Cause: "",
