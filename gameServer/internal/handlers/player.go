@@ -29,20 +29,22 @@ func (player *Player) Handle(e event.Event) {
 
 	switch eType {
 	case event.EventTypeMove:
-		eMove, _ := e.(EventMove)
-
-		eMove.Player = player
-		
-		player.nextHandler.Handle(eMove)
+		player.handleMove(e.(EventMove))
 
 	case event.EventTypeExit:
-		eExit, _ := e.(EventExit)
-
-		eExit.Player = player
-
-		player.nextHandler.Handle(eExit)
+		player.handleExit(e.(EventExit))
 
 	default:
 		player.nextHandler.Handle(e)
 	}
+}
+
+func (player *Player) handleMove(eMove EventMove){
+	eMove.Player = player
+	player.nextHandler.Handle(eMove)
+}
+
+func (player *Player) handleExit(eExit EventExit){
+	eExit.Player = player
+	player.nextHandler.Handle(eExit)
 }
