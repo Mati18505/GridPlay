@@ -1,6 +1,7 @@
 package game
 
 import (
+	"TicTacToe/assert"
 	"math/rand"
 )
 
@@ -17,14 +18,20 @@ func RandomChar() char {
 }
 
 func OpponentChar(c char) char {
+	var opponent char
+	
 	switch c {
 	case x:
-		return o
+		opponent = o
 	case o:
-		return x
+		opponent = x
+	case e:
+		assert.Never("cannot get e opponent")
 	default:
-		return 0
+		assert.Never("unkown char type", "char", c)
 	}
+
+	return opponent
 }
 
 func (c char) GetRune() rune {
@@ -37,6 +44,8 @@ func (c char) GetRune() rune {
 		r = 'o'
 	case e:
 		r = ' '
+	default:
+		assert.Never("unknown char type", "char", c)
 	}
 
 	return r

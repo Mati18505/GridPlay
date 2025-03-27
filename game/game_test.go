@@ -132,7 +132,6 @@ func TestGameWinChecker(t *testing.T) {
 func TestGameOpponentChar(t *testing.T) {
 	require.Equal(t, OpponentChar(x), o)
 	require.Equal(t, OpponentChar(o), x)
-	require.Equal(t, OpponentChar(e), e)
 }
 
 func TestGameCharToRune(t *testing.T) {
