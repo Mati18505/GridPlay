@@ -114,3 +114,15 @@ func TestGameWinChecker(t *testing.T) {
 		require.Equal(t, chkg.checkWinnerByLastMove(), char(x))
 	}
 }
+
+func TestGameOpponentChar(t *testing.T) {
+	require.Equal(t, OpponentChar(x), o)
+	require.Equal(t, OpponentChar(o), x)
+	require.Equal(t, OpponentChar(e), e)
+}
+
+func TestGameCharToRune(t *testing.T) {
+	require.Equal(t, e.GetRune(), ' ')
+	require.Equal(t, x.GetRune(), 'x')
+	require.Equal(t, o.GetRune(), 'o')
+}
