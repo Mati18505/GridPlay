@@ -1,10 +1,10 @@
 package game
 
 import (
+	"TicTacToe/assert"
 	"TicTacToe/game/winState"
 	"container/list"
 	"errors"
-	"log"
 	"math"
 )
 
@@ -69,8 +69,8 @@ func areEqual[t comparable](v1, v2, v3 t) bool {
 
 func (game *Game) checkWinnerByLastMove() char {
     var winner char
-	state := game.state
 
+	state := game.state
 	lastMove, err := game.getLastMove()
 
 	if err != nil  {
@@ -101,6 +101,10 @@ func (game *Game) checkDraw() bool {
 
 
 func (game *Game) Move(pos Pos) error {
+	if pos.X < 0 || pos.Y < 0 || pos.X > 2 || pos.Y > 2 {
+		assert.Never("position is out of range", "pos", pos)
+	}
+
 	if game.winState != winState.Values.None {
 		return errors.New("cannot move after game ended")
 	}
@@ -171,9 +175,7 @@ func (game *Game) getLastMove() (move, error) {
 
 func (game *Game) GetPlayerWithId(id int) Player {
 	if id < 0 || id > 1 {
-		// TODO: assert
-		log.Fatalf("I shouldn't be here.")
-		panic("I shouldn't be here.")
+		assert.Never("player id must be 0 or 1", "player id", id)
 	}
 	return game.players[id]
 }
