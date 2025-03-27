@@ -1,12 +1,26 @@
 package game
 
 import (
+	"TicTacToe/assert"
 	"TicTacToe/game/winState"
 	"container/list"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
+
+func TestMain(m *testing.M) {
+    setup()
+    code := m.Run() 
+    os.Exit(code)
+}
+
+func setup() {
+	assertFile, err := os.Create("assert.txt")
+	assert.NoError(err, "unable to open assert file")
+	assert.ToWriter(assertFile)
+}
 
 func TestGameEnd(t *testing.T) {
 	game := CreateGame()
@@ -125,4 +139,12 @@ func TestGameCharToRune(t *testing.T) {
 	require.Equal(t, e.GetRune(), ' ')
 	require.Equal(t, x.GetRune(), 'x')
 	require.Equal(t, o.GetRune(), 'o')
+}
+
+func TestRandomChar(t *testing.T) {
+	for i := 0; i < 16; i++ {
+		randomChar := RandomChar()
+		require.Greater(t, randomChar, e)
+		require.LessOrEqual(t, randomChar, o)
+	}
 }
