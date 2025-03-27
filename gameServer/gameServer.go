@@ -1,6 +1,7 @@
 package gameServer
 
 import (
+	"TicTacToe/assert"
 	"TicTacToe/gameServer/internal/connection"
 	"TicTacToe/gameServer/internal/event"
 	"TicTacToe/gameServer/internal/handlers"
@@ -98,17 +99,15 @@ func (srv *Server) addRoom(room *handlers.Room) {
 	srv.rooms[room.GetUUID()] = room
 }
 
-func (srv *Server) createRoom(pConnections [2]*PlayerConnection) (*handlers.Room, error) {
+func (srv *Server) createRoom(pConnections [2]*PlayerConnection) *handlers.Room {
 	log.Println("creating room")
 
 	uuid, err := uuid.NewUUID()
-	if err != nil {
-		return nil, errors.New("cannot generate uuid for this room")
-	}
+	assert.NoError(err, "This should never return an error.")
 
 	room := CreateRoom(srv.sync, pConnections, uuid)
 
-	return room, nil
+	return room
 }
 
 func (srv *Server) removeRoom(roomUUID uuid.UUID) {
@@ -139,15 +138,8 @@ func (srv *Server) matchMaker() {
 		a2 := c2.GetConnection().SendPing() == nil
 
 		if a1 && a2 {
-			room, err := srv.createRoom([2]*PlayerConnection{c1, c2})
+			room := srv.createRoom([2]*PlayerConnection{c1, c2})
 			
-			if err != nil {
-				log.Printf("cannot create room, err: %s", err)
-				// TODO: assert
-				log.Fatalf("I shouldn't be here.")
-				panic("I shouldn't be here.")
-			}
-
 			srv.addRoom(room)
 		} else if !a1 {
 			srv.matcher <- id2
