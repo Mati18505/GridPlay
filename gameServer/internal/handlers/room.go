@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"TicTacToe/assert"
 	"TicTacToe/game"
 	"TicTacToe/game/winState"
 	"errors"
@@ -22,11 +23,15 @@ type Room struct {
 }
 
 func CreateRoom(nextHandler Handler, pConnections [2]*PlayerConnection, uuid uuid.UUID) *Room {
+	assert.NotNil(nextHandler, "next handler was nil")
+	assert.NotNil(pConnections, "player connection array was nil")
+
 	room := &Room{
 		nextHandler: nextHandler,
 		uuid: uuid,
 	}
 	room.sync = CreateSynchronizer(room)
+	assert.NotNil(room.sync, "room sync was nil")
 
 	room.createPlayers(pConnections)
 	room.createGame()
@@ -39,11 +44,17 @@ func (room *Room) GetUUID() uuid.UUID {
 }
 
 func (room *Room) createPlayers(pConnections [2]*PlayerConnection) {
+	assert.NotNil(pConnections, "player connection array was nil")
+
 	room.players[0] = room.createPlayer(pConnections[0], 0)
 	room.players[1] = room.createPlayer(pConnections[1], 1)
+	assert.NotNil(room.players[0], "room player was nil")
+	assert.NotNil(room.players[1], "room player was nil")
 }
 
 func (room *Room) createPlayer(pConn *PlayerConnection, playerId int) *Player {
+	assert.NotNil(pConn, "player connection was nil")
+
 	player := CreatePlayer(room.sync, pConn.uuid, playerId)
 	pConn.SetNextHandler(&player)
 
@@ -51,13 +62,19 @@ func (room *Room) createPlayer(pConn *PlayerConnection, playerId int) *Player {
 }
 
 func (room *Room) createGame() {
+	assert.NotNil(room.players, "players array was nil")
+
 	room.game = game.CreateGame()
+	assert.NotNil(room.game, "game was nil")
 
 	room.sendMatchStartedMessage(room.players[0])
 	room.sendMatchStartedMessage(room.players[1])
 }
 
 func (room *Room) sendMatchStartedMessage(player *Player) {
+	assert.NotNil(player, "player was nil")
+	assert.NotNil(room.game, "game was nil")
+
 	gamePlayer := room.game.GetPlayerWithId(player.playerID)
 	playerChar := gamePlayer.GetChar()
 	opponentChar := game.OpponentChar(playerChar)
@@ -90,20 +107,25 @@ func (room *Room) Handle(e event.Event) {
 	switch eType {
 	case event.EventTypeMove:
 		eMove, _ := e.(EventMove)
+		assert.NotNil(eMove.Player, "event move player was nil")
 
 		err := room.handleMove(eMove)
 
 		if err != nil {
 			fmt.Printf("Room handle move error: %s", err)
 		}
-		room.checkGameWin(eMove)
+		err = room.checkGameWin(eMove)
+		assert.NoError(err, "check game win error")
 
 	case event.EventTypeExit:
 		eExit, _ := e.(EventExit)
-		opponent := room.GetOpponent(eExit.Player.playerID)
+		assert.NotNil(eExit.Player, "event exit player was nil")
 
-		eExit.RoomUUID = room.GetUUID()
+		opponent := room.GetOpponent(eExit.Player.playerID)
+		assert.NotNil(opponent, "opponent was nil")
+
 		eExit.OpponentConnId = opponent.connectionID
+		eExit.RoomUUID = room.GetUUID()
 
 		room.handleExit(eExit)
 
@@ -115,12 +137,17 @@ func (room *Room) Handle(e event.Event) {
 }
 
 func (room *Room) handleExit(eExit EventExit) {
+	assert.NotNil(room.game, "game was nil")
+
 	if room.game.GetWinState() == winState.Values.None {
-		room.gameEndWinHandler(eExit.OpponentConnId, eExit.ConnectionId)
+		err := room.gameEndWinHandler(eExit.OpponentConnId, eExit.ConnectionId)
+		assert.NoError(err, "game win handler error")
 	}
 }
 
 func (room *Room) handleMove(eMove EventMove) error {
+	assert.NotNil(eMove.Player, "event move player was nil")
+
 	err := room.eMovePlayer(eMove)
 	sendErr := room.eMoveSendResponse(err, eMove.Player)
 
@@ -133,15 +160,18 @@ func (room *Room) handleMove(eMove EventMove) error {
 	}
 	
 	opponent := room.GetOpponent(eMove.Player.playerID)
+	assert.NotNil(opponent, "opponent was nil")
+
 	err = room.eMoveSendMessageToOpponent(eMove, opponent)
 	return err
 }
 
 func (room *Room) eMovePlayer(eMove EventMove) error {
-	// TODO: assert if game don't exist ? (maybe always exist)
+	assert.NotNil(room.game, "game was nil")
+	assert.NotNil(eMove.Player, "event move player was nil")
+
 	var err error
 	currPlayer := room.game.GetCurrentRoundPlayer()
-
 	gamePlayer := room.game.GetPlayerWithId(eMove.Player.playerID)
 
 	if currPlayer == gamePlayer {
@@ -154,7 +184,7 @@ func (room *Room) eMovePlayer(eMove EventMove) error {
 }
 
 func (room *Room) eMoveSendResponse(err error, player *Player) error {
-	// TODO: assert player, err != nil
+	assert.NotNil(player, "player was nil")
 
 	response := new(message.MoveRes) 
 
@@ -180,6 +210,8 @@ func (room *Room) eMoveSendResponse(err error, player *Player) error {
 }
 
 func (room *Room) eMoveSendMessageToOpponent(eMove EventMove, opponent *Player) error {
+	assert.NotNil(opponent, "opponent was nil")
+
 	msgForOpponent, err := message.MakeMessage(message.TOpponentMove, &message.MoveMessage{
 		X: eMove.X,
 		Y: eMove.Y,
@@ -196,9 +228,13 @@ func (room *Room) eMoveSendMessageToOpponent(eMove EventMove, opponent *Player) 
 }
 
 func (room *Room) checkGameWin(eMove EventMove) error {
+	assert.NotNil(room.game, "game was nil")
+	assert.NotNil(eMove.Player, "event move player was nil")
+
 	wState := room.game.GetWinState()
 	player := eMove.Player
 	opponent := room.GetOpponent(player.playerID)
+	assert.NotNil(opponent, "opponent was nil")
 	
 	var err error
 
@@ -213,7 +249,8 @@ func (room *Room) checkGameWin(eMove EventMove) error {
 
 // TODO: unit test
 func (room *Room) GetOpponent(playerID int) *Player {
-	// TODO: assert if game don't exist ? (maybe always exist)
+	assert.NotNil(room.players, "players array was nil")
+
 	var opponentId int
 
 	switch playerID {
@@ -221,6 +258,8 @@ func (room *Room) GetOpponent(playerID int) *Player {
 		opponentId = 1
 	case 1:
 		opponentId = 0
+	default:
+		assert.Never("player id was out of range")
 	}
 
 	return room.players[opponentId]
