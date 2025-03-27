@@ -141,7 +141,7 @@ func TestGameCharToRune(t *testing.T) {
 }
 
 func TestRandomChar(t *testing.T) {
-	for i := 0; i < 16; i++ {
+	for range 16 {
 		randomChar := RandomChar()
 		require.Greater(t, randomChar, e)
 		require.LessOrEqual(t, randomChar, o)
