@@ -36,7 +36,6 @@ func CreateRoom(nextHandler Handler, pConnections [2]*PlayerConnection, uuid uui
 
 	assert.NotNil(room.sync, "room sync was nil")
 	assert.NotNil(room.game, "game was nil")
-	assert.NotNil(room.players, "players was nil")
 
 	room.sendMatchStartedMessage(room.players[0])
 	room.sendMatchStartedMessage(room.players[1])
