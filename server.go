@@ -11,18 +11,22 @@ import (
 )
 
 var srv *gameServer.Server
+var loopStopSignal chan bool
+var isLoopRunning bool
 
 func handleConnections(w http.ResponseWriter, r *http.Request) {
+	assert.NotNil(srv, "server was nil")
+
 	err := srv.HandleConnection(w, r)
 
 	if err != nil {
-		log.Println("cannot add connection")
+		log.Printf("cannot add connection, error: %s", err)
 	}
 }
 
-var loopStopSignal chan bool
-
 func loop() {
+	assert.NotNil(srv, "server was nil")
+
 	for {
 		select {
 		case <- time.After(time.Millisecond * 50):
@@ -34,10 +38,14 @@ func loop() {
 }
 
 func startLoop() {
+	assert.Assert(!isLoopRunning, "loop was already running")
+
 	go loop()
 }
 
 func stopLoop() {
+	assert.Assert(isLoopRunning, "loop wasn't running")
+
 	loopStopSignal <- true
 }
 
