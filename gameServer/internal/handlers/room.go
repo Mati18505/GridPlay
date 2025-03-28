@@ -31,12 +31,15 @@ func CreateRoom(nextHandler Handler, pConnections [2]*PlayerConnection, uuid uui
 		uuid: uuid,
 	}
 	room.sync = CreateSynchronizer(room)
-	room.createPlayers(pConnections)
-	room.createGame()
+	room.players = room.createPlayers(pConnections)
+	room.game = room.createGame()
 
 	assert.NotNil(room.sync, "room sync was nil")
 	assert.NotNil(room.game, "game was nil")
 	assert.NotNil(room.players, "players was nil")
+
+	room.sendMatchStartedMessage(room.players[0])
+	room.sendMatchStartedMessage(room.players[1])
 
 	return room
 }
@@ -45,13 +48,16 @@ func (room *Room) GetUUID() uuid.UUID {
 	return room.uuid
 }
 
-func (room *Room) createPlayers(pConnections [2]*PlayerConnection) {
+func (room *Room) createPlayers(pConnections [2]*PlayerConnection) [2]*Player {
 	assert.NotNil(pConnections, "player connection array was nil")
 
-	room.players[0] = room.createPlayer(pConnections[0], 0)
-	room.players[1] = room.createPlayer(pConnections[1], 1)
-	assert.NotNil(room.players[0], "room player was nil")
-	assert.NotNil(room.players[1], "room player was nil")
+	var players [2]*Player
+	players[0] = room.createPlayer(pConnections[0], 0)
+	players[1] = room.createPlayer(pConnections[1], 1)
+	assert.NotNil(players[0], "player was nil")
+	assert.NotNil(players[1], "player was nil")
+
+	return players
 }
 
 func (room *Room) createPlayer(pConn *PlayerConnection, playerId int) *Player {
@@ -64,14 +70,11 @@ func (room *Room) createPlayer(pConn *PlayerConnection, playerId int) *Player {
 	return &player
 }
 
-func (room *Room) createGame() {
-	assert.NotNil(room.players, "players array was nil")
+func (room *Room) createGame() *game.Game {
+	game := game.CreateGame()
+	assert.NotNil(game, "game was nil")
 
-	room.game = game.CreateGame()
-	room.sendMatchStartedMessage(room.players[0])
-	room.sendMatchStartedMessage(room.players[1])
-
-	assert.NotNil(room.game, "game was nil")
+	return game
 }
 
 func (room *Room) sendMatchStartedMessage(player *Player) {
