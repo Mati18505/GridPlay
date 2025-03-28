@@ -34,7 +34,13 @@ func (conn *Connection) StartReceiving() {
 	conn.receives = true
 }
 
-// Blocking
+func (conn *Connection) StopReceiving() {
+	assert.Assert(conn.receives, "connection wasn't receiving")
+	assert.NotNil(conn.socket, "websocket was nil")
+
+	conn.socket.Close()
+}
+
 func (conn *Connection) receiveMessages() {
 	assert.NotNil(conn.socket, "websocket was nil")
 
@@ -72,13 +78,6 @@ func (conn *Connection) SendPing() error {
 	assert.NotNil(conn.socket, "websocket was nil")
 
 	return conn.socket.WriteMessage(websocket.PingMessage, []byte("ping"))
-}
-
-func (conn *Connection) Close() {
-	assert.NotNil(conn.socket, "websocket was nil")
-
-	// TODO: Wait until messages are send?
-	conn.socket.Close()
 }
 
 func (conn *Connection) GetRemoteIP() string {
