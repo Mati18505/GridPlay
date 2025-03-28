@@ -66,10 +66,9 @@ func (pConn *PlayerConnection) Handle(e event.Event) {
 	} else {
 		log.Printf("cannot do this while game is not running")
 
-		message, err := message.MakeMessage(message.TNotAllowedErr, &message.NotAllowedErrMessage{
+		message := message.MakeMessage(message.TNotAllowedErr, &message.NotAllowedErrMessage{
 			Reason: "cannot do this while game is not running",
 		})
-		assert.NoError(err, "cannot make not allowed err message")
 
 		pConn.GetConnection().SendMessage(message)
 	}

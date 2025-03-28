@@ -85,14 +85,10 @@ func (room *Room) sendMatchStartedMessage(player *Player) {
 	playerChar := gamePlayer.GetChar()
 	opponentChar := game.OpponentChar(playerChar)
 
-	matchStartMsg, err := message.MakeMessage(message.TMatchStarted, &message.MatchStarted{
+	matchStartMsg := message.MakeMessage(message.TMatchStarted, &message.MatchStarted{
 		Char: playerChar.GetRune(),
 		OpponentChar: opponentChar.GetRune(),
 	})
-
-	if err != nil {
-		assert.Never("cannot make match started message")
-	}
 
 	room.sendToNextHandler(EventSendMessage{
 		ConnectionId: player.connectionID,
@@ -154,27 +150,16 @@ func (room *Room) handleMove(eMove EventMove) error {
 	assert.NotNil(eMove.Player, "event move player was nil")
 
 	err := room.eMovePlayer(eMove)
-	var sendErr error
 
 	if err != nil {
-		sendErr = room.eMoveSendErrorResponse(err, eMove.Player)
+		room.eMoveSendErrorResponse(err, eMove.Player)
+		return err
 	} else {
-		sendErr = room.eMoveSendSuccessResponse(eMove.Player)
-	}
-
-	if err != nil {
-		return err
-	}
-	if sendErr != nil {
-		return err
+		room.eMoveSendSuccessResponse(eMove.Player)
 	}
 
 	opponent := room.GetOpponent(eMove.Player.playerID)
-	err = room.eMoveSendMessageToOpponent(eMove, opponent)
-
-	if err != nil {
-		return err
-	}
+	room.eMoveSendMessageToOpponent(eMove, opponent)
 
 	err = room.checkGameWin(eMove)
 
@@ -208,10 +193,7 @@ func (room *Room) eMoveSendErrorResponse(err error, player *Player) error {
 	response.Reason = err.Error()
 	log.Printf("cannot handle move for %+v\n%s", player, err)
 
-	resMsg, err := message.MakeMessage(int(message.TMoveAns), response) 
-	if err != nil {
-		return err
-	}
+	resMsg := message.MakeMessage(int(message.TMoveAns), response) 
 
 	room.sendToNextHandler(EventSendMessage{
 		ConnectionId: player.connectionID,
@@ -221,41 +203,32 @@ func (room *Room) eMoveSendErrorResponse(err error, player *Player) error {
 	return err
 }
 
-func (room *Room) eMoveSendSuccessResponse(player *Player) error {
+func (room *Room) eMoveSendSuccessResponse(player *Player) {
 	assert.NotNil(player, "player was nil")
 
 	response := new(message.MoveRes) 
 	response.Approved = true
 
-	resMsg, err := message.MakeMessage(int(message.TMoveAns), response) 
-	if err != nil {
-		return err
-	}
+	resMsg := message.MakeMessage(int(message.TMoveAns), response) 
 
 	room.sendToNextHandler(EventSendMessage{
 		ConnectionId: player.connectionID,
 		Msg: *resMsg,
 	})
-
-	return err
 }
 
-func (room *Room) eMoveSendMessageToOpponent(eMove EventMove, opponent *Player) error {
+func (room *Room) eMoveSendMessageToOpponent(eMove EventMove, opponent *Player) {
 	assert.NotNil(opponent, "opponent was nil")
 
-	msgForOpponent, err := message.MakeMessage(message.TOpponentMove, &message.MoveMessage{
+	msgForOpponent := message.MakeMessage(message.TOpponentMove, &message.MoveMessage{
 		X: eMove.X,
 		Y: eMove.Y,
 	})
-	if err != nil {
-		return err
-	}
 
 	room.sendToNextHandler(EventSendMessage{
 		ConnectionId: opponent.connectionID,
 		Msg: *msgForOpponent,
 	})
-	return err
 }
 
 func (room *Room) checkGameWin(eMove EventMove) error {
@@ -299,27 +272,20 @@ func (room *Room) GetOpponent(playerID int) *Player {
 }
 
 func (room *Room) gameEndWinHandler(winner, loser uuid.UUID) error {
-	winMsg, err := message.MakeMessage(message.TWinEvent, &message.WinMessage{
+	winMsg := message.MakeMessage(message.TWinEvent, &message.WinMessage{
 		Status: "win",
 		Cause: "",
 	})
-	if err != nil {
-		return err
-	} 
 
 	room.sendToNextHandler(EventSendMessage{
 		ConnectionId: winner,
 		Msg: *winMsg,
 	})
 	
-	loseMsg, err := message.MakeMessage(message.TWinEvent, &message.WinMessage{
+	loseMsg := message.MakeMessage(message.TWinEvent, &message.WinMessage{
 		Status: "lose",
 		Cause: "",
 	})
-
-	if err != nil {
-		return err
-	} 
 
 	room.sendToNextHandler(EventSendMessage{
 		ConnectionId: loser,
@@ -330,13 +296,10 @@ func (room *Room) gameEndWinHandler(winner, loser uuid.UUID) error {
 }
 
 func (room *Room) gameEndDrawHandler(c1, c2 uuid.UUID) error {
-	drawMsg, err := message.MakeMessage(message.TWinEvent, &message.WinMessage{
+	drawMsg := message.MakeMessage(message.TWinEvent, &message.WinMessage{
 		Status: "draw",
 		Cause: "",
 	})
-	if err != nil {
-		return err
-	} 
 
 	room.sendToNextHandler(EventSendMessage{
 		ConnectionId: c1,

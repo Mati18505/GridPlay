@@ -1,6 +1,7 @@
 package message
 
 import (
+	"TicTacToe/assert"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -37,6 +38,7 @@ type NotAllowedErrMessage struct {
 }
 
 // From server
+const serverMessagesCount = 5
 const (
 	TMatchStarted = iota
 	TMoveAns
@@ -79,15 +81,16 @@ func (msg *Message) MarshallMessage() ([]byte, error) {
 	return bytes, nil
 }
 
-func MakeMessage[T any](msgType int, msgData *T) (*Message, error) {
+func MakeMessage[T any](msgType int, msgData *T) *Message {
+	assert.Assert(msgType < serverMessagesCount && msgType >= 0, "msgType was out of range")
+
 	data, err := json.Marshal(msgData)
-	if err != nil {
-		return nil, err
-	}
+	assert.NoError(err, "cannot create message: json marshal returned error")
+
 	return &Message{
 		Type: msgType,
 		Data: data,
-	}, nil
+	} 
 }
 
 func ParseMessage[T any](msg *Message) (*T, error) {
