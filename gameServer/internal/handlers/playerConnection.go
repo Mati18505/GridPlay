@@ -86,7 +86,7 @@ func (pConn *PlayerConnection) loop() {
 			e, err := EventFromMessage(msg)
 
 			if err != nil {
-				log.Printf("Unknown type of message.")
+				log.Printf("Unknown type of message, err: %s", err)
 				continue
 			} 
 

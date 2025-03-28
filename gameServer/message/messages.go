@@ -58,14 +58,15 @@ func (msgT ClientMsg) String() string  {
 	case Move:
 		return "move"
 	default:
+		assert.Never("unknown type of client message", "client message", msgT)
 		return "unknown"
 	}
 }
 
 func UnmarshalMessage(bytes []byte) (*Message, error) {
 	msg := new(Message)
-
 	err := json.Unmarshal(bytes, &msg)
+
 	if err != nil {
 		return nil, errors.New("can't unmarshal message")
 	}
@@ -73,19 +74,18 @@ func UnmarshalMessage(bytes []byte) (*Message, error) {
 	return msg, nil
 }
 
-func (msg *Message) MarshallMessage() ([]byte, error) {
+func (msg *Message) MarshallMessage() []byte {
 	bytes, err := json.Marshal(&msg)
-	if err != nil {
-		return nil, errors.New("can't marshall message")
-	}
-	return bytes, nil
+
+	assert.NoError(err, "cannot marshall message: json marshal returned error")
+	return bytes
 }
 
 func MakeMessage[T any](msgType int, msgData *T) *Message {
 	assert.Assert(msgType < serverMessagesCount && msgType >= 0, "msgType was out of range")
 
-	data, err := json.Marshal(msgData)
-	assert.NoError(err, "cannot create message: json marshal returned error")
+	data, err := json.Marshal(&msgData)
+	assert.NoError(err, "cannot marshall message: json marshal returned error")
 
 	return &Message{
 		Type: msgType,
@@ -95,8 +95,8 @@ func MakeMessage[T any](msgType int, msgData *T) *Message {
 
 func ParseMessage[T any](msg *Message) (*T, error) {
 	result := new(T)
-
 	err := json.Unmarshal(msg.Data, &result)
+
 	if err != nil {
 		return nil, errors.New(fmt.Sprint("can't parse message to type: ", reflect.TypeOf(result)))
 	}

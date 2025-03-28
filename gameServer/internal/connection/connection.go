@@ -14,7 +14,7 @@ type Connection struct {
 	exitChan chan bool
 }
 
-func CreateConnection(socket  *websocket.Conn) *Connection {
+func CreateConnection(socket *websocket.Conn) *Connection {
 	return &Connection{
 		socket: socket,
 		messageFromClient: make(chan *message.Message),
@@ -43,12 +43,9 @@ func (conn *Connection) ReceiveMessages() {
 }
 
 func (conn *Connection) SendMessage(msg *message.Message) error {
-	data, err := msg.MarshallMessage()
-	if err != nil {
-		return err
-	}
+	data := msg.MarshallMessage()
 
-	err = conn.socket.WriteMessage(websocket.TextMessage, data)
+	err := conn.socket.WriteMessage(websocket.TextMessage, data)
 	return err
 }
 
