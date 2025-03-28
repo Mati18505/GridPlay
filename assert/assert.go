@@ -7,6 +7,7 @@ import (
 	"log"
 	"log/slog"
 	"reflect"
+	"runtime/debug"
 )
 
 var assertData map[string]any = map[string]any{}
@@ -66,6 +67,15 @@ func runAssert(msg string, args ...any) {
 		} else {
 			fmt.Printf("%v ", stringify(item))
 		}
+	}
+
+
+	if writer != nil {
+		fmt.Fprintln(writer)
+		writer.Write(debug.Stack())
+	} else {
+		fmt.Println()
+		debug.PrintStack()
 	}
 
 	if writer == nil {
