@@ -129,11 +129,11 @@ func (srv *Server) sendMessage(connId uuid.UUID, msg *message.Message) {
 // Blocking
 func (srv *Server) matchMaker() {
 	for {
-		id1, c1 := srv.getConnectionFromMatcher()
-		id2, c2 := srv.getConnectionFromMatcher()
+		id1, c1, err1 := srv.getConnectionFromMatcher()
+		id2, c2, err2 := srv.getConnectionFromMatcher()
 
-		a1 := c1.GetConnection().SendPing() == nil
-		a2 := c2.GetConnection().SendPing() == nil
+		a1 := err1 == nil && c1.GetConnection().SendPing() == nil
+		a2 := err2 == nil && c2.GetConnection().SendPing() == nil
 
 		if a1 && a2 {
 			room := srv.createRoom([2]*PlayerConnection{c1, c2})
@@ -149,12 +149,11 @@ func (srv *Server) matchMaker() {
 	}
 }
 
-func (srv *Server) getConnectionFromMatcher() (uuid.UUID, *PlayerConnection) {
+func (srv *Server) getConnectionFromMatcher() (uuid.UUID, *PlayerConnection, error) {
 	id := <-srv.matcher
 	conn, err := srv.getConnection(id)
 
-	assert.NoError(err, "player connection was nil")
-	return id, conn
+	return id, conn, err
 }
 
 func (srv *Server) eventNotHandled(e event.Event) {
