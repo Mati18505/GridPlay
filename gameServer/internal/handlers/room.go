@@ -155,7 +155,13 @@ func (room *Room) handleMove(eMove EventMove) error {
 	assert.NotNil(eMove.Player, "event move player was nil")
 
 	err := room.eMovePlayer(eMove)
-	sendErr := room.eMoveSendResponse(err, eMove.Player)
+	var sendErr error
+
+	if err != nil {
+		sendErr = room.eMoveSendErrorResponse(err, eMove.Player)
+	} else {
+		sendErr = room.eMoveSendSuccessResponse(eMove.Player)
+	}
 
 	if err != nil {
 		return err
@@ -188,18 +194,34 @@ func (room *Room) eMovePlayer(eMove EventMove) error {
 	return err
 }
 
-func (room *Room) eMoveSendResponse(err error, player *Player) error {
+func (room *Room) eMoveSendErrorResponse(err error, player *Player) error {
 	assert.NotNil(player, "player was nil")
+	assert.NotNil(err, "error was nil")
 
 	response := new(message.MoveRes) 
 
+	response.Approved = false
+	response.Reason = err.Error()
+	log.Printf("cannot handle move for %+v\n%s", player, err)
+
+	resMsg, err := message.MakeMessage(int(message.TMoveAns), response) 
 	if err != nil {
-		response.Approved = false
-		response.Reason = err.Error()
-		log.Printf("cannot handle move for %+v\n%s", player, err)
-	} else {
-		response.Approved = true
+		return err
 	}
+
+	room.sendToNextHandler(EventSendMessage{
+		ConnectionId: player.connectionID,
+		Msg: *resMsg,
+	})
+
+	return err
+}
+
+func (room *Room) eMoveSendSuccessResponse(player *Player) error {
+	assert.NotNil(player, "player was nil")
+
+	response := new(message.MoveRes) 
+	response.Approved = true
 
 	resMsg, err := message.MakeMessage(int(message.TMoveAns), response) 
 	if err != nil {
