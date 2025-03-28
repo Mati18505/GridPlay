@@ -15,14 +15,14 @@ type Player struct {
 	playerID int
 }
 
-func CreatePlayer(nextHandler Handler, connId uuid.UUID, playerId int) Player {
+func CreatePlayer(nextHandler Handler, connId uuid.UUID, playerId int) *Player {
 	assert.NotNil(nextHandler, "nextHandler was nil")
 
 	if playerId < 0 || playerId > 1 {
 		assert.Never("player id was out of range")
 	}
 
-	return Player{
+	return &Player{
 		nextHandler: nextHandler,
 		connectionID: connId,
 		playerID: playerId,

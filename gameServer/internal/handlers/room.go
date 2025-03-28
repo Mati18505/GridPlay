@@ -65,9 +65,9 @@ func (room *Room) createPlayer(pConn *PlayerConnection, playerId int) *Player {
 	assert.NotNil(pConn, "player connection was nil")
 
 	player := CreatePlayer(room.sync, pConn.uuid, playerId)
-	pConn.SetNextHandler(&player)
+	pConn.SetNextHandler(player)
 
-	return &player
+	return player
 }
 
 func (room *Room) createGame() *game.Game {
@@ -125,6 +125,7 @@ func (room *Room) Handle(e event.Event) {
 	case event.EventTypeExit:
 		eExit, ok := e.(EventExit)
 		assert.Assert(ok, "type assertion failed for event exit")
+
 		room.handleExit(eExit)
 
 	default:
