@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"TicTacToe/assert"
 	"TicTacToe/gameServer/internal/event"
 	"TicTacToe/gameServer/message"
 	"errors"
@@ -37,6 +38,8 @@ func (eType EventSendMessage) GetType() event.EventType {
 }
 
 func EventFromMessage(msg *message.Message) (event.Event, error) {
+	assert.NotNil(msg, "message was nil")
+
 	switch message.ClientMsg(msg.Type) {
 	case message.Move:
 		data, err := message.ParseMessage[message.MoveMessage](msg)
