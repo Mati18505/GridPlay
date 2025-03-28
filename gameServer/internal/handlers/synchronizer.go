@@ -31,7 +31,7 @@ func (sync *Synchronizer) SyncTransferAll() {
 	for {
 		select {
 		case e := <-sync.syncChannel:
-			sync.nextHandler.Handle(e)
+			sync.sendToNextHandler(e)
 		default:
 			assert.Assert(sync.empty(), "SyncTransferAll should clear syncChannel")
 			return
@@ -41,4 +41,10 @@ func (sync *Synchronizer) SyncTransferAll() {
 
 func (sync *Synchronizer) empty() bool {
 	return len(sync.syncChannel) == 0
+}
+
+func (sync *Synchronizer) sendToNextHandler(e event.Event) {
+	assert.NotNil(sync.nextHandler, "player next handler was nil")
+
+	sync.nextHandler.Handle(e)
 }
