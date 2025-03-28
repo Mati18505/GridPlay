@@ -3,6 +3,7 @@ package handlers
 import (
 	"log"
 
+	"TicTacToe/assert"
 	"TicTacToe/gameServer/internal/connection"
 	"TicTacToe/gameServer/internal/event"
 	"TicTacToe/gameServer/message"
@@ -16,31 +17,46 @@ type PlayerConnection struct {
 	uuid uuid.UUID
 	connection *connection.Connection
 	stopLoop chan bool
+	isLoopRunning bool
 }
 
 func CreatePlayerConnection(serverHandler Handler, uuid uuid.UUID, conn *connection.Connection) *PlayerConnection {
+	assert.NotNil(serverHandler, "server handler was nil")
+	assert.NotNil(conn, "connection was nil")
+
 	return &PlayerConnection{
 		nextHandler: nil,
 		serverHandler: serverHandler,
 		uuid: uuid,
 		connection: conn,
 		stopLoop: make(chan bool),
+		isLoopRunning: false,
 	}
 }
 
 func (playerConn *PlayerConnection) StartLoop() {
+	assert.Assert(!playerConn.isLoopRunning, "loop was already running")
+
 	go playerConn.loop()
+	playerConn.isLoopRunning = true
 }
 
 func (playerConn *PlayerConnection) EndLoop() {
+	assert.Assert(playerConn.isLoopRunning, "loop wasn't running")
+
 	playerConn.stopLoop <- true
+	playerConn.isLoopRunning = false
 }
 
 func (playerConn *PlayerConnection) GetConnection() *connection.Connection {
+	assert.NotNil(playerConn.connection, "connection was nil")
+
 	return playerConn.connection;
 }
 
 func (playerConn *PlayerConnection) SetNextHandler(nextHandler Handler) {
+	assert.NotNil(nextHandler, "next handler was nil")
+
 	playerConn.nextHandler = nextHandler
 }
 
@@ -53,31 +69,25 @@ func (pConn *PlayerConnection) Handle(e event.Event) {
 		message, err := message.MakeMessage(message.TNotAllowedErr, &message.NotAllowedErrMessage{
 			Reason: "cannot do this while game is not running",
 		})
+		assert.NoError(err, "cannot make not allowed err message")
 
-		if err != nil {
-			log.Print("cannot make not allowed err message")
-			// TODO: What now?
-		}
-
-		pConn.connection.SendMessage(message)
+		pConn.GetConnection().SendMessage(message)
 	}
 }
 
 func (pConn *PlayerConnection) loop() {
-	conn := pConn.connection
+	conn := pConn.GetConnection()
 	remoteIP := conn.GetRemoteIP()
 
-	LOOP:
 	for {
 		select {
 		case msg := <- conn.GetMessageFromClient():
-
 			log.Printf("playerConnection: received message from %q: Type: %v, ", remoteIP, message.ClientMsg(msg.Type))
 
 			e, err := EventFromMessage(msg)
 
 			if err != nil {
-				log.Printf("Unknown type of message")
+				log.Printf("Unknown type of message.")
 				continue
 			} 
 
@@ -95,11 +105,17 @@ func (pConn *PlayerConnection) loop() {
 			if pConn.nextHandler != nil {
 				pConn.nextHandler.Handle(e)
 			} else {
-				pConn.serverHandler.Handle(e)
+				pConn.sendToServerHandler(e)
 			}
 
 		case <- pConn.stopLoop:
-			break LOOP
+			return
 		}
 	}
+}
+
+func (pConn *PlayerConnection) sendToServerHandler(e event.Event) {
+	assert.NotNil(pConn.serverHandler, "server handler was nil")
+
+	pConn.serverHandler.Handle(e)
 }
