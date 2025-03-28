@@ -3,6 +3,7 @@ package connection
 import (
 	"log"
 
+	"TicTacToe/assert"
 	"TicTacToe/gameServer/message"
 
 	"github.com/gorilla/websocket"
@@ -12,23 +13,35 @@ type Connection struct {
 	socket  *websocket.Conn
 	messageFromClient chan *message.Message
 	exitChan chan bool
+	receives bool
 }
 
 func CreateConnection(socket *websocket.Conn) *Connection {
+	assert.NotNil(socket, "websocket was nil")
+
 	return &Connection{
 		socket: socket,
 		messageFromClient: make(chan *message.Message),
 		exitChan: make(chan bool),
+		receives: false,
 	}
 }
 
+func (conn *Connection) StartReceiving() {
+	assert.Assert(!conn.receives, "connection was already receiving")
+
+	go conn.receiveMessages()
+	conn.receives = true
+}
+
 // Blocking
-func (conn *Connection) ReceiveMessages() {
+func (conn *Connection) receiveMessages() {
+	assert.NotNil(conn.socket, "websocket was nil")
+
 	for {
 		_, data, err := conn.socket.ReadMessage()
 		if err != nil {
 			log.Printf("connection with %q closed\n", conn.GetRemoteIP())
-			conn.exitChan <- true
 			break;
 		}
 
@@ -40,25 +53,37 @@ func (conn *Connection) ReceiveMessages() {
 
 		conn.messageFromClient <- msg
 	}
+
+	conn.exitChan <- true
+	conn.receives = false
 }
 
 func (conn *Connection) SendMessage(msg *message.Message) error {
-	data := msg.MarshallMessage()
+	assert.NotNil(msg, "msg was nil")
+	assert.NotNil(conn.socket, "websocket was nil")
 
+	data := msg.MarshallMessage()
 	err := conn.socket.WriteMessage(websocket.TextMessage, data)
+
 	return err
 }
 
 func (conn *Connection) SendPing() error {
+	assert.NotNil(conn.socket, "websocket was nil")
+
 	return conn.socket.WriteMessage(websocket.PingMessage, []byte("ping"))
 }
 
 func (conn *Connection) Close() {
+	assert.NotNil(conn.socket, "websocket was nil")
+
 	// TODO: Wait until messages are send?
 	conn.socket.Close()
 }
 
 func (conn *Connection) GetRemoteIP() string {
+	assert.NotNil(conn.socket, "websocket was nil")
+
 	return conn.socket.NetConn().RemoteAddr().String();
 }
 

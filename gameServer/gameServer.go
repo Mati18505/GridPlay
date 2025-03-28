@@ -52,7 +52,7 @@ func (srv *Server) AddConnection(conn *connection.Connection) error {
 
 	log.Printf("connected to %q, uuid:%q\n", conn.GetRemoteIP(), id.String())
 
-	go conn.ReceiveMessages()
+	conn.StartReceiving()
 	pConn.StartLoop()
 
 	return nil
