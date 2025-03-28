@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"TicTacToe/assert"
 	"TicTacToe/gameServer/internal/event"
 )
 
@@ -15,6 +16,12 @@ type Player struct {
 }
 
 func CreatePlayer(nextHandler Handler, connId uuid.UUID, playerId int) Player {
+	assert.NotNil(nextHandler, "nextHandler was nil")
+
+	if playerId < 0 || playerId > 1 {
+		assert.Never("player id was out of range")
+	}
+
 	return Player{
 		nextHandler: nextHandler,
 		connectionID: connId,
@@ -29,22 +36,34 @@ func (player *Player) Handle(e event.Event) {
 
 	switch eType {
 	case event.EventTypeMove:
-		player.handleMove(e.(EventMove))
+		eMove, ok := e.(EventMove)
+		assert.Assert(ok, "type assertion failed for event move")
+
+		player.handleMove(eMove)
 
 	case event.EventTypeExit:
-		player.handleExit(e.(EventExit))
+		eExit, ok := e.(EventExit)
+		assert.Assert(ok, "type assertion failed for event exit")
+
+		player.handleExit(eExit)
 
 	default:
-		player.nextHandler.Handle(e)
+		player.sendToNextHandler(e)
 	}
 }
 
-func (player *Player) handleMove(eMove EventMove){
+func (player *Player) handleMove(eMove EventMove) {
 	eMove.Player = player
-	player.nextHandler.Handle(eMove)
+	player.sendToNextHandler(eMove)
 }
 
-func (player *Player) handleExit(eExit EventExit){
+func (player *Player) handleExit(eExit EventExit) {
 	eExit.Player = player
-	player.nextHandler.Handle(eExit)
+	player.sendToNextHandler(eExit)
+}
+
+func (player *Player) sendToNextHandler(e event.Event) {
+	assert.NotNil(player.nextHandler, "player next handler was nil")
+
+	player.nextHandler.Handle(e)
 }
