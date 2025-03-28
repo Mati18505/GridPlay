@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"log/slog"
+	"reflect"
 )
 
 var assertData map[string]any = map[string]any{}
@@ -82,7 +83,7 @@ func Assert(truth bool, msg string, data ...any) {
 }
 
 func NotNil(item any, msg string) {
-	if item == nil {
+	if item == nil || (reflect.ValueOf(item).Kind() == reflect.Ptr && reflect.ValueOf(item).IsNil()) {
 		slog.Error("NotNil#nil encountered")
 		runAssert(msg)
 	}
