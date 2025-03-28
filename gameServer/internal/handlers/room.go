@@ -24,7 +24,8 @@ type Room struct {
 
 func CreateRoom(nextHandler Handler, pConnections [2]*PlayerConnection, uuid uuid.UUID) *Room {
 	assert.NotNil(nextHandler, "next handler was nil")
-	assert.NotNil(pConnections, "player connection array was nil")
+	assert.NotNil(pConnections[0], "player connection was nil")
+	assert.NotNil(pConnections[1], "player connection was nil")
 
 	room := &Room{
 		nextHandler: nextHandler,
