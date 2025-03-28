@@ -95,7 +95,6 @@ func (pConn *PlayerConnection) loop() {
 
 		case <- conn.GetExitChan():
 			log.Printf("disconnected from %q\n", remoteIP)
-			conn.Close()
 
 			e := EventExit{
 				ConnectionId: pConn.uuid,
