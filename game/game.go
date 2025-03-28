@@ -74,7 +74,7 @@ func (game *Game) checkWinnerByLastMove() char {
 	lastMove, err := game.getLastMove()
 
 	if err != nil  {
-		return 0
+		return e
 	}
 
 	pos := lastMove.pos
@@ -92,13 +92,13 @@ func (game *Game) checkWinnerByLastMove() char {
         winner = state[2][0]
     }
 
+	assert.Assert(winner >= 0 && winner <= 2, "winner out of range", "winner", winner)
     return winner
 }
 
 func (game *Game) checkDraw() bool {
     return game.moveHistory.Len() == int(math.Pow(3.0, 2.0)) - 1
 }
-
 
 func (game *Game) Move(pos Pos) error {
 	if pos.X < 0 || pos.Y < 0 || pos.X > 2 || pos.Y > 2 {
@@ -134,6 +134,11 @@ func (game *Game) Move(pos Pos) error {
 }
 
 func (game *Game) check(pos Pos, c char) error {
+	if pos.X < 0 || pos.Y < 0 || pos.X > 2 || pos.Y > 2 {
+		assert.Never("position is out of range", "pos", pos)
+	}
+	assert.Assert(c >= 0 && c <= 2, "char out of range", "char", c)
+
 	if game.state[pos.X][pos.Y] != e {
 		return errors.New("cell is not empty")
 	}
@@ -170,7 +175,10 @@ func (game *Game) getLastMove() (move, error) {
 		return move{}, errors.New("there are no moves")
 	}
 
-	return lastMove.Value.(move), nil
+	m, ok := lastMove.Value.(move)
+	assert.Assert(ok, "type assertion failed for value move")
+
+	return m, nil
 }
 
 func (game *Game) GetPlayerWithId(id int) Player {
