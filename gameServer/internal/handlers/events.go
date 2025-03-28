@@ -14,6 +14,7 @@ type EventExit struct {
 	Player *Player
 	ConnectionId uuid.UUID
 	OpponentConnId uuid.UUID
+	RoomExist bool
 }
 
 type EventMove struct {

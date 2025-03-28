@@ -176,11 +176,14 @@ func (srv *Server) Handle(e event.Event) {
 		eExit, ok := e.(EventExit)
 		assert.Assert(ok, "type assertion failed for event exit")
 
-		srv.matcher <- eExit.OpponentConnId
 		srv.DeleteConnection(eExit.ConnectionId)
 
-		log.Println("removing room")
-		srv.removeRoom(eExit.RoomUUID)
+		if eExit.RoomExist {
+			srv.matcher <- eExit.OpponentConnId
+
+			log.Println("removing room")
+			srv.removeRoom(eExit.RoomUUID)
+		}
 
 	default:
 		srv.eventNotHandled(e)

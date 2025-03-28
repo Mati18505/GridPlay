@@ -137,6 +137,7 @@ func (room *Room) handleExit(eExit EventExit) {
 
 	eExit.OpponentConnId = opponent.connectionID
 	eExit.RoomUUID = room.GetUUID()
+	eExit.RoomExist = true
 
 	if room.game.GetWinState() == winState.Values.None {
 		err := room.gameEndWinHandler(eExit.OpponentConnId, eExit.ConnectionId)

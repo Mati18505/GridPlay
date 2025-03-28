@@ -98,6 +98,7 @@ func (pConn *PlayerConnection) loop() {
 
 			e := EventExit{
 				ConnectionId: pConn.uuid,
+				RoomExist: false,
 			}
 
 			if pConn.nextHandler != nil {
