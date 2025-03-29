@@ -92,7 +92,7 @@ func (room *Room) sendMatchStartedMessage(player *Player) {
 
 	room.sendToNextHandler(EventSendMessage{
 		ConnectionId: player.connectionID,
-		Msg: *matchStartMsg,
+		Msg: matchStartMsg,
 	})
 }
 
@@ -198,7 +198,7 @@ func (room *Room) eMoveSendErrorResponse(err error, player *Player) error {
 
 	room.sendToNextHandler(EventSendMessage{
 		ConnectionId: player.connectionID,
-		Msg: *resMsg,
+		Msg: resMsg,
 	})
 
 	return err
@@ -214,7 +214,7 @@ func (room *Room) eMoveSendSuccessResponse(player *Player) {
 
 	room.sendToNextHandler(EventSendMessage{
 		ConnectionId: player.connectionID,
-		Msg: *resMsg,
+		Msg: resMsg,
 	})
 }
 
@@ -228,7 +228,7 @@ func (room *Room) eMoveSendMessageToOpponent(eMove EventMove, opponent *Player) 
 
 	room.sendToNextHandler(EventSendMessage{
 		ConnectionId: opponent.connectionID,
-		Msg: *msgForOpponent,
+		Msg: msgForOpponent,
 	})
 }
 
@@ -280,7 +280,7 @@ func (room *Room) gameEndWinHandler(winner, loser uuid.UUID) error {
 
 	room.sendToNextHandler(EventSendMessage{
 		ConnectionId: winner,
-		Msg: *winMsg,
+		Msg: winMsg,
 	})
 	
 	loseMsg := message.MakeMessage(message.TWinEvent, &message.WinMessage{
@@ -290,7 +290,7 @@ func (room *Room) gameEndWinHandler(winner, loser uuid.UUID) error {
 
 	room.sendToNextHandler(EventSendMessage{
 		ConnectionId: loser,
-		Msg: *loseMsg,
+		Msg: loseMsg,
 	})
 
 	return nil
@@ -304,12 +304,12 @@ func (room *Room) gameEndDrawHandler(c1, c2 uuid.UUID) error {
 
 	room.sendToNextHandler(EventSendMessage{
 		ConnectionId: c1,
-		Msg: *drawMsg,
+		Msg: drawMsg,
 	})
 
 	room.sendToNextHandler(EventSendMessage{
 		ConnectionId: c2,
-		Msg: *drawMsg,
+		Msg: drawMsg,
 	})
 
 	return nil

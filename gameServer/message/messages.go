@@ -63,42 +63,42 @@ func (msgT ClientMsg) String() string  {
 	}
 }
 
-func UnmarshalMessage(bytes []byte) (*Message, error) {
-	msg := new(Message)
+func UnmarshalMessage(bytes []byte) (Message, error) {
+	var msg Message
 	err := json.Unmarshal(bytes, &msg)
 
 	if err != nil {
-		return nil, errors.New("can't unmarshal message")
+		return msg, errors.New("can't unmarshal message")
 	}
 	
 	return msg, nil
 }
 
-func (msg *Message) MarshallMessage() []byte {
+func (msg Message) MarshallMessage() []byte {
 	bytes, err := json.Marshal(&msg)
 
 	assert.NoError(err, "cannot marshall message: json marshal returned error")
 	return bytes
 }
 
-func MakeMessage[T any](msgType int, msgData *T) *Message {
+func MakeMessage[T any](msgType int, msgData *T) Message {
 	assert.Assert(msgType < serverMessagesCount && msgType >= 0, "msgType was out of range")
 
 	data, err := json.Marshal(&msgData)
 	assert.NoError(err, "cannot marshall message: json marshal returned error")
 
-	return &Message{
+	return Message{
 		Type: msgType,
 		Data: data,
 	} 
 }
 
-func ParseMessage[T any](msg *Message) (*T, error) {
-	result := new(T)
+func ParseMessage[T any](msg Message) (T, error) {
+	var result T
 	err := json.Unmarshal(msg.Data, &result)
 
 	if err != nil {
-		return nil, errors.New(fmt.Sprint("can't parse message to type: ", reflect.TypeOf(result)))
+		return result, errors.New(fmt.Sprint("can't parse message to type: ", reflect.TypeOf(result)))
 	}
 
 	return result, nil

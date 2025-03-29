@@ -38,7 +38,7 @@ func (eType EventSendMessage) GetType() event.EventType {
 	return event.EventTypeSendMessage;
 }
 
-func EventFromMessage(msg *message.Message) (event.Event, error) {
+func EventFromMessage(msg message.Message) (event.Event, error) {
 	assert.NotNil(msg, "message was nil")
 
 	switch message.ClientMsg(msg.Type) {

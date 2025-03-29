@@ -11,7 +11,7 @@ import (
 
 type Connection struct {
 	socket  *websocket.Conn
-	messageFromClient chan *message.Message
+	messageFromClient chan message.Message
 	exitChan chan bool
 	receives bool
 }
@@ -21,7 +21,7 @@ func CreateConnection(socket *websocket.Conn) *Connection {
 
 	return &Connection{
 		socket: socket,
-		messageFromClient: make(chan *message.Message),
+		messageFromClient: make(chan message.Message),
 		exitChan: make(chan bool),
 		receives: false,
 	}
@@ -64,7 +64,7 @@ func (conn *Connection) receiveMessages() {
 	conn.receives = false
 }
 
-func (conn *Connection) SendMessage(msg *message.Message) error {
+func (conn *Connection) SendMessage(msg message.Message) error {
 	assert.NotNil(msg, "msg was nil")
 	assert.NotNil(conn.socket, "websocket was nil")
 
@@ -86,7 +86,7 @@ func (conn *Connection) GetRemoteIP() string {
 	return conn.socket.NetConn().RemoteAddr().String();
 }
 
-func (conn *Connection) GetMessageFromClient() <-chan *message.Message {
+func (conn *Connection) GetMessageFromClient() <-chan message.Message {
 	return conn.messageFromClient
 }
 

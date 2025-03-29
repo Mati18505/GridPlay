@@ -116,7 +116,7 @@ func (srv *Server) removeRoom(roomUUID uuid.UUID) {
 	delete(srv.rooms, roomUUID)
 }
 
-func (srv *Server) sendMessage(connId uuid.UUID, msg *message.Message) {
+func (srv *Server) sendMessage(connId uuid.UUID, msg message.Message) {
 	assert.NotNil(msg, "message was nil")
 	
 	pConn, err := srv.getConnection(connId)
@@ -169,7 +169,7 @@ func (srv *Server) Handle(e event.Event) {
 		eSendMessage, ok := e.(EventSendMessage)
 		assert.Assert(ok, "type assertion failed for event sendMessage")
 
-		srv.sendMessage(eSendMessage.ConnectionId, &eSendMessage.Msg)
+		srv.sendMessage(eSendMessage.ConnectionId, eSendMessage.Msg)
 		
 	case event.EventTypeExit:
 		eExit, ok := e.(EventExit)
