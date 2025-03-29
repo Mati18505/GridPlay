@@ -9,12 +9,15 @@ import (
 	"github.com/google/uuid"
 )
 
-type EventExit struct {
-	RoomUUID uuid.UUID
+type EventDisconnect struct {
+	ConnectionId uuid.UUID
 	Player *Player
+}
+
+type EventRemoveRoom struct {
+	RoomUUID uuid.UUID
 	ConnectionId uuid.UUID
 	OpponentConnId uuid.UUID
-	RoomExist bool
 }
 
 type EventMove struct {
@@ -28,8 +31,11 @@ type EventSendMessage struct {
 	Msg message.Message
 }
 
-func (eType EventExit) GetType() event.EventType {
-	return event.EventTypeExit;
+func (eType EventDisconnect) GetType() event.EventType {
+	return event.EventTypeDisconnect;
+}
+func (eType EventRemoveRoom) GetType() event.EventType {
+	return event.EventTypeRemoveRoom;
 }
 func (eType EventMove) GetType() event.EventType {
 	return event.EventTypeMove;

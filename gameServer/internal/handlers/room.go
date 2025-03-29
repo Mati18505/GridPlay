@@ -118,8 +118,8 @@ func (room *Room) Handle(e event.Event) {
 			fmt.Printf("Room handle move error: %s", err)
 		}
 
-	case event.EventTypeExit:
-		eExit, ok := e.(EventExit)
+	case event.EventTypeDisconnect:
+		eExit, ok := e.(EventDisconnect)
 		assert.Assert(ok, "type assertion failed for event exit")
 
 		room.handleExit(eExit)
@@ -129,22 +129,24 @@ func (room *Room) Handle(e event.Event) {
 	}
 }
 
-func (room *Room) handleExit(eExit EventExit) {
+func (room *Room) handleExit(eExit EventDisconnect) {
 	assert.NotNil(eExit.Player, "event exit player was nil")
 	assert.NotNil(room.game, "game was nil")
 
 	opponent := room.GetOpponent(eExit.Player.playerID)
 
-	eExit.OpponentConnId = opponent.connectionID
-	eExit.RoomUUID = room.GetUUID()
-	eExit.RoomExist = true
+	eRemoveRoom := EventRemoveRoom{
+		RoomUUID: room.GetUUID(),
+		ConnectionId: eExit.ConnectionId,
+		OpponentConnId: opponent.connectionID,
+	}
 
 	if room.game.GetWinState() == winState.Values.None {
-		err := room.gameEndWinHandler(eExit.OpponentConnId, eExit.ConnectionId)
+		err := room.gameEndWinHandler(opponent.connectionID, eExit.ConnectionId)
 		assert.NoError(err, "game win handler error")
 	}
 
-	room.sendToNextHandler(eExit)
+	room.sendToNextHandler(eRemoveRoom)
 }
 
 func (room *Room) handleMove(eMove EventMove) error {

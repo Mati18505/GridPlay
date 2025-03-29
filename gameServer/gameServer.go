@@ -171,19 +171,21 @@ func (srv *Server) Handle(e event.Event) {
 
 		srv.sendMessage(eSendMessage.ConnectionId, eSendMessage.Msg)
 		
-	case event.EventTypeExit:
-		eExit, ok := e.(EventExit)
+	case event.EventTypeDisconnect:
+		eExit, ok := e.(EventDisconnect)
 		assert.Assert(ok, "type assertion failed for event exit")
 
 		srv.DeleteConnection(eExit.ConnectionId)
 
-		if eExit.RoomExist {
-			srv.matcher <- eExit.OpponentConnId
+	case event.EventTypeRemoveRoom:
+		eRemoveRoom, ok := e.(EventRemoveRoom)
+		assert.Assert(ok, "type assertion failed for event remove room")
 
-			log.Println("removing room")
-			srv.removeRoom(eExit.RoomUUID)
-		}
+		srv.DeleteConnection(eRemoveRoom.ConnectionId)
+		srv.matcher <- eRemoveRoom.OpponentConnId
 
+		log.Println("removing room")
+		srv.removeRoom(eRemoveRoom.RoomUUID)
 	default:
 		srv.eventNotHandled(e)
 	}

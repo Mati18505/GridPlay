@@ -13,7 +13,8 @@ func (emptyEvent EmptyEvent) GetType() EventType {
 type EventType int
 const (
 	EventTypeNone EventType = iota
-	EventTypeExit
+	EventTypeDisconnect
+	EventTypeRemoveRoom
 	EventTypeMove
 	EventTypeSendMessage
 )

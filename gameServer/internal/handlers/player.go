@@ -41,8 +41,8 @@ func (player *Player) Handle(e event.Event) {
 
 		player.handleMove(eMove)
 
-	case event.EventTypeExit:
-		eExit, ok := e.(EventExit)
+	case event.EventTypeDisconnect:
+		eExit, ok := e.(EventDisconnect)
 		assert.Assert(ok, "type assertion failed for event exit")
 
 		player.handleExit(eExit)
@@ -57,7 +57,7 @@ func (player *Player) handleMove(eMove EventMove) {
 	player.sendToNextHandler(eMove)
 }
 
-func (player *Player) handleExit(eExit EventExit) {
+func (player *Player) handleExit(eExit EventDisconnect) {
 	eExit.Player = player
 	player.sendToNextHandler(eExit)
 }
