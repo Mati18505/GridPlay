@@ -38,7 +38,8 @@ func (conn *Connection) StopReceiving() {
 	assert.Assert(conn.receives, "connection wasn't receiving")
 	assert.NotNil(conn.socket, "websocket was nil")
 
-	conn.socket.Close()
+	closeMess := websocket.FormatCloseMessage(1000, "Connection closed by server.")
+	conn.socket.WriteMessage(websocket.CloseMessage, closeMess)
 }
 
 func (conn *Connection) receiveMessages() {
@@ -60,6 +61,7 @@ func (conn *Connection) receiveMessages() {
 		conn.messageFromClient <- msg
 	}
 
+	conn.socket.Close()
 	conn.exitChan <- true
 	conn.receives = false
 }
