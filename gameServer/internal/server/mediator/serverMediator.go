@@ -9,8 +9,7 @@ import (
 	"TicTacToe/gameServer/internal/server/serverData"
 	"TicTacToe/gameServer/internal/server/serverEvents"
 	"TicTacToe/gameServer/message"
-	"fmt"
-	"log"
+	"log/slog"
 
 	"github.com/google/uuid"
 )
@@ -67,7 +66,7 @@ func (mediator *ServerMediator) FromServerHandler(e event.Event) bool {
 		err := mediator.SendMessage(eSendMessage.ConnectionId, eSendMessage.Msg)
 
 		if err != nil {
-			fmt.Printf("Cannot send message to connection %v, %s", eSendMessage.ConnectionId, err)
+			slog.Warn("Cannot send message to connection %v, %s", eSendMessage.ConnectionId, err)
 		}
 		
 	case event.EventTypeDisconnect:
@@ -85,7 +84,7 @@ func (mediator *ServerMediator) FromServerHandler(e event.Event) bool {
 		mediator.DeleteConnection(eRemoveRoom.ConnectionId)
 		mediator.matchmaker.Add(eRemoveRoom.OpponentConnId)
 
-		log.Println("removing room")
+		slog.Info("removing room", "uuid", eRemoveRoom.RoomUUID)
 		mediator.serverData.RemoveRoom(eRemoveRoom.RoomUUID)
 	default:
 		return false
@@ -139,10 +138,10 @@ func (mediator *ServerMediator) FromMatchmaker(e event.Event) bool {
 func (mediator *ServerMediator) CreateRoom(pConnections [2]*handlers.PlayerConnection) *handlers.Room {
 	assert.NotNil(mediator.handler, "server handler was nil")
 
-	log.Println("creating room")
-
 	uuid := mediator.GenerateUUID()
 	room := handlers.CreateRoom(mediator.handler.GetSync(), pConnections, uuid)
+
+	slog.Info("creating room", "uuid", uuid)
 
 	assert.NotNil(room, "room was nil")
 	return room
@@ -186,7 +185,7 @@ func (mediator *ServerMediator) AddConnection(conn *connection.Connection) {
 	conn.StartReceiving()
 	pConn.StartLoop()
 
-	log.Printf("connected to %q, uuid:%q\n", conn.GetRemoteIP(), id.String())
+	slog.Info("connected to", "ip", conn.GetRemoteIP(), "uuid", id.String())
 }
 
 func (mediator *ServerMediator) DeleteConnection(id uuid.UUID) {
@@ -216,6 +215,5 @@ func (mediator *ServerMediator) updateAllRooms() {
 }
 
 func (mediator *ServerMediator) eventNotHandled(e serverEvents.MediatorEvent) {
-	// TODO: Check if it's logged correctly.
-	log.Printf("event not handled: %+v", e)
+	slog.Error("server event not handled", "Sender", e.Sender, "Type", e.Event.GetType())
 }

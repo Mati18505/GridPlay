@@ -5,7 +5,7 @@ import (
 	"TicTacToe/game"
 	"TicTacToe/game/winState"
 	"errors"
-	"log"
+	"log/slog"
 
 	"TicTacToe/gameServer/internal/event"
 	"TicTacToe/gameServer/message"
@@ -104,7 +104,7 @@ func (room *Room) Update() {
 func (room *Room) Handle(e event.Event) { 
 	eType := e.GetType()
 
-	log.Printf("event in room: Type: %v, ", eType)
+	slog.Debug("event in room", "Type", eType)
 
 	switch eType {
 	case event.EventTypeMove:
@@ -186,7 +186,7 @@ func (room *Room) eMoveSendErrorResponse(err error, player *Player) {
 
 	response.Approved = false
 	response.Reason = err.Error()
-	log.Printf("cannot handle move for %+v\n%s", player, err)
+	slog.Info("cannot handle move for", "player", player, "err", err)
 
 	resMsg := message.MakeMessage(int(message.TMoveAns), response) 
 

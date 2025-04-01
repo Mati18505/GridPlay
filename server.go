@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"time"
@@ -20,7 +21,7 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 	err := srv.HandleConnection(w, r)
 
 	if err != nil {
-		log.Printf("cannot add connection, error: %s", err)
+		slog.Error("cannot add connection", "error", err)
 	}
 }
 

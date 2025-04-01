@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"log"
+	"log/slog"
 
 	"TicTacToe/assert"
 	"TicTacToe/gameServer/internal/connection"
@@ -64,7 +64,7 @@ func (pConn *PlayerConnection) Handle(e event.Event) {
 	if pConn.nextHandler != nil {
 		pConn.nextHandler.Handle(e)
 	} else {
-		log.Printf("cannot do this while game is not running")
+		slog.Info("cannot do this while game is not running")
 
 		message := message.MakeMessage(message.TNotAllowedErr, &message.NotAllowedErrMessage{
 			Reason: "cannot do this while game is not running",
@@ -81,21 +81,19 @@ func (pConn *PlayerConnection) loop() {
 	for {
 		select {
 		case msg := <- conn.GetMessageFromClient():
-			log.Printf("playerConnection: received message from %q: Type: %v, ", remoteIP, message.ClientMsg(msg.Type))
+			slog.Debug("received message from", "ip", remoteIP, "Type", message.ClientMsg(msg.Type))
 
 			e, err := EventFromMessage(msg)
 
 			if err != nil {
-				log.Printf("Unknown type of message, err: %s", err)
+				slog.Warn("unknown type of message", "err", err)
 				continue
 			} 
 
-			log.Printf("playerConnection: Created event %+v", e)
+			slog.Debug("created event", "type", e.GetType(), "event", e)
 			pConn.Handle(e)
 
 		case <- conn.GetExitChan():
-			log.Printf("disconnected from %q\n", remoteIP)
-
 			e := EventDisconnect{
 				ConnectionId: pConn.uuid,
 			}

@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"log"
+	"log/slog"
 
 	"github.com/google/uuid"
 
@@ -32,7 +32,7 @@ func CreatePlayer(nextHandler Handler, connId uuid.UUID, playerId int) *Player {
 func (player *Player) Handle(e event.Event) {
 	eType := e.GetType()
 
-	log.Printf("event in player: Type: %v, ", eType)
+	slog.Debug("event in player", "Type", eType)
 
 	switch eType {
 	case event.EventTypeMove:

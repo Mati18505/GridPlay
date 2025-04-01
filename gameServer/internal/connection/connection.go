@@ -1,7 +1,7 @@
 package connection
 
 import (
-	"log"
+	"log/slog"
 
 	"TicTacToe/assert"
 	"TicTacToe/gameServer/message"
@@ -48,13 +48,13 @@ func (conn *Connection) receiveMessages() {
 	for {
 		_, data, err := conn.socket.ReadMessage()
 		if err != nil {
-			log.Printf("connection with %q closed\n", conn.GetRemoteIP())
+			slog.Info("connection closed with", "ip", conn.GetRemoteIP())
 			break;
 		}
 
 		msg, err := message.UnmarshalMessage(data)
 		if err != nil {
-			log.Println("cannot unmarshal message received from ", conn.GetRemoteIP())
+			slog.Warn("cannot unmarshal message, received from", "ip", conn.GetRemoteIP())
 			continue
 		}
 
