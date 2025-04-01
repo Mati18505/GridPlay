@@ -17,4 +17,6 @@ const (
 	EventTypeRemoveRoom
 	EventTypeMove
 	EventTypeSendMessage
+	// server
+	EventTypePlayersMatched
 )

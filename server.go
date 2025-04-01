@@ -39,14 +39,18 @@ func loop() {
 
 func startLoop() {
 	assert.Assert(!isLoopRunning, "loop was already running")
+	assert.NotNil(srv, "server was nil")
 
 	go loop()
+	srv.StartLoop()
 }
 
 func stopLoop() {
 	assert.Assert(isLoopRunning, "loop wasn't running")
+	assert.NotNil(srv, "server was nil")
 
 	loopStopSignal <- true
+	srv.StopLoop()
 }
 
 func main() {
