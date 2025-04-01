@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"reflect"
 	"runtime/debug"
+	"time"
 )
 
 var assertData map[string]any = map[string]any{}
@@ -47,6 +48,14 @@ func stringify(item any) string {
 }
 
 func runAssert(msg string, args ...any) {
+	if writer != nil {
+		fmt.Fprintln(writer, GetTime())
+		fmt.Fprintln(writer)
+	} else {
+		fmt.Println(GetTime())
+		fmt.Println()
+	}
+	
 	for k, v := range assertData {
 		if writer != nil {
 			fmt.Fprintf(writer, "%s=%s\n", k, stringify(v))
@@ -107,4 +116,8 @@ func NoError(err error, msg string, data ...any) {
 		slog.Error("NoError#error encountered", "error", err)
 		runAssert(msg, data...)
 	}
+}
+
+func GetTime() string {
+	return time.Now().Format("01-02-2006 15:04:05")
 }
