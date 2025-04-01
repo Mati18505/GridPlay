@@ -5,7 +5,6 @@ import (
 	"TicTacToe/game"
 	"TicTacToe/game/winState"
 	"errors"
-	"fmt"
 	"log"
 
 	"TicTacToe/gameServer/internal/event"
@@ -112,11 +111,7 @@ func (room *Room) Handle(e event.Event) {
 		eMove, ok := e.(EventMove)
 		assert.Assert(ok, "type assertion failed for event move")
 
-		err := room.handleMove(eMove)
-
-		if err != nil {
-			fmt.Printf("Room handle move error: %s", err)
-		}
+		room.handleMove(eMove)
 
 	case event.EventTypeDisconnect:
 		eExit, ok := e.(EventDisconnect)
@@ -142,31 +137,28 @@ func (room *Room) handleExit(eExit EventDisconnect) {
 	}
 
 	if room.game.GetWinState() == winState.Values.None {
-		err := room.gameEndWinHandler(opponent.connectionID, eExit.ConnectionId)
-		assert.NoError(err, "game win handler error")
+		room.gameEndWinHandler(opponent.connectionID, eExit.ConnectionId)
 	}
 
 	room.sendToNextHandler(eRemoveRoom)
 }
 
-func (room *Room) handleMove(eMove EventMove) error {
+func (room *Room) handleMove(eMove EventMove) {
 	assert.NotNil(eMove.Player, "event move player was nil")
 
 	err := room.eMovePlayer(eMove)
 
 	if err != nil {
 		room.eMoveSendErrorResponse(err, eMove.Player)
-		return err
-	} else {
-		room.eMoveSendSuccessResponse(eMove.Player)
-	}
+		return
+	} 
+
+	room.eMoveSendSuccessResponse(eMove.Player)
 
 	opponent := room.GetOpponent(eMove.Player.playerID)
 	room.eMoveSendMessageToOpponent(eMove, opponent)
 
-	err = room.checkGameWin(eMove)
-
-	return err
+	room.checkGameWin(eMove)
 }
 
 func (room *Room) eMovePlayer(eMove EventMove) error {
@@ -186,7 +178,7 @@ func (room *Room) eMovePlayer(eMove EventMove) error {
 	return err
 }
 
-func (room *Room) eMoveSendErrorResponse(err error, player *Player) error {
+func (room *Room) eMoveSendErrorResponse(err error, player *Player) {
 	assert.NotNil(player, "player was nil")
 	assert.NotNil(err, "error was nil")
 
@@ -202,8 +194,6 @@ func (room *Room) eMoveSendErrorResponse(err error, player *Player) error {
 		ConnectionId: player.connectionID,
 		Msg: resMsg,
 	})
-
-	return err
 }
 
 func (room *Room) eMoveSendSuccessResponse(player *Player) {
@@ -234,7 +224,7 @@ func (room *Room) eMoveSendMessageToOpponent(eMove EventMove, opponent *Player) 
 	})
 }
 
-func (room *Room) checkGameWin(eMove EventMove) error {
+func (room *Room) checkGameWin(eMove EventMove) {
 	assert.NotNil(room.game, "game was nil")
 	assert.NotNil(eMove.Player, "event move player was nil")
 
@@ -242,15 +232,11 @@ func (room *Room) checkGameWin(eMove EventMove) error {
 	player := eMove.Player
 	opponent := room.GetOpponent(player.playerID)
 	
-	var err error
-
 	if wState == winState.Values.Win {
-		err = room.gameEndWinHandler(player.connectionID, opponent.connectionID)
+		room.gameEndWinHandler(player.connectionID, opponent.connectionID)
 	} else if wState == winState.Values.Draw {
-		err = room.gameEndDrawHandler(player.connectionID, opponent.connectionID)
+		room.gameEndDrawHandler(player.connectionID, opponent.connectionID)
 	}
-
-	return err
 }
 
 // TODO: unit test
@@ -274,7 +260,7 @@ func (room *Room) GetOpponent(playerID int) *Player {
 	return opponent
 }
 
-func (room *Room) gameEndWinHandler(winner, loser uuid.UUID) error {
+func (room *Room) gameEndWinHandler(winner, loser uuid.UUID) {
 	winMsg := message.MakeMessage(message.TWinEvent, &message.WinMessage{
 		Status: "win",
 		Cause: "",
@@ -294,11 +280,9 @@ func (room *Room) gameEndWinHandler(winner, loser uuid.UUID) error {
 		ConnectionId: loser,
 		Msg: loseMsg,
 	})
-
-	return nil
 }
 
-func (room *Room) gameEndDrawHandler(c1, c2 uuid.UUID) error {
+func (room *Room) gameEndDrawHandler(c1, c2 uuid.UUID) {
 	drawMsg := message.MakeMessage(message.TWinEvent, &message.WinMessage{
 		Status: "draw",
 		Cause: "",
@@ -313,8 +297,6 @@ func (room *Room) gameEndDrawHandler(c1, c2 uuid.UUID) error {
 		ConnectionId: c2,
 		Msg: drawMsg,
 	})
-
-	return nil
 }
 
 func (room *Room) sendToNextHandler(e event.Event) {
