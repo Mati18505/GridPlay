@@ -9,6 +9,7 @@ import (
 	"TicTacToe/gameServer/internal/server/serverData"
 	"TicTacToe/gameServer/internal/server/serverEvents"
 	"TicTacToe/gameServer/message"
+	"fmt"
 	"log"
 
 	"github.com/google/uuid"
@@ -63,7 +64,11 @@ func (mediator *ServerMediator) FromServerHandler(e event.Event) bool {
 		eSendMessage, ok := e.(handlers.EventSendMessage)
 		assert.Assert(ok, "type assertion failed for event sendMessage")
 
-		mediator.SendMessage(eSendMessage.ConnectionId, eSendMessage.Msg)
+		err := mediator.SendMessage(eSendMessage.ConnectionId, eSendMessage.Msg)
+
+		if err != nil {
+			fmt.Printf("Cannot send message to connection %v, %s", eSendMessage.ConnectionId, err)
+		}
 		
 	case event.EventTypeDisconnect:
 		eExit, ok := e.(handlers.EventDisconnect)
@@ -143,15 +148,20 @@ func (mediator *ServerMediator) CreateRoom(pConnections [2]*handlers.PlayerConne
 	return room
 }
 
-func (mediator *ServerMediator) SendMessage(connId uuid.UUID, msg message.Message) {
+func (mediator *ServerMediator) SendMessage(connId uuid.UUID, msg message.Message) error {
 	assert.NotNil(mediator.serverData, "server data was nil")
 	assert.NotNil(msg, "message was nil")
 	
 	pConn, err := mediator.serverData.GetConnection(connId)
-	assert.NoError(err, "player connection was nil")
+
+	if err != nil {
+		return err
+	}
 
 	conn := pConn.GetConnection()
 	conn.SendMessage(msg)
+
+	return nil
 }
 
 func (mediator *ServerMediator) GenerateUUID() uuid.UUID {
