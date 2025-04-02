@@ -187,9 +187,9 @@ func (mediator *ServerMediator) AddConnection(conn *connection.Connection) {
 	pConn := handlers.CreatePlayerConnection(mediator.handler.GetSync(), id, conn)
 
 	mediator.serverData.AddPlayerConnection(id, pConn)
-	mediator.matchmaker.Add(id)
 
 	pConn.StartLoop()
+	mediator.matchmaker.Add(id)
 
 	slog.Info("connected to", "ip", conn.GetRemoteIP(), "uuid", id.String())
 }
