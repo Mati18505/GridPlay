@@ -82,6 +82,8 @@ func (mediator *ServerMediator) FromServerHandler(e event.Event) bool {
 		assert.NotNil(mediator.serverData, "serverData was nil")
 
 		mediator.DeleteConnection(eRemoveRoom.ConnectionId)
+
+		slog.Debug("adding player to matcher", "uuid", eRemoveRoom.OpponentConnId)
 		mediator.matchmaker.Add(eRemoveRoom.OpponentConnId)
 
 		slog.Info("removing room", "uuid", eRemoveRoom.RoomUUID)
@@ -101,6 +103,8 @@ func (mediator *ServerMediator) FromMatchmaker(e event.Event) bool {
 		assert.Assert(ok, "type assertion failed for event players matched")
 		assert.NotNil(mediator.matchmaker, "matchmaker was nil")
 		assert.NotNil(mediator.serverData, "serverData was nil")
+
+		slog.Debug("players matched event", "id1", ePlayersMatched.Ids[0], "id2", ePlayersMatched.Ids[1])
 
 		ids := ePlayersMatched.Ids
 		conns := [2]*handlers.PlayerConnection{}
@@ -141,7 +145,7 @@ func (mediator *ServerMediator) CreateRoom(pConnections [2]*handlers.PlayerConne
 	uuid := mediator.GenerateUUID()
 	room := handlers.CreateRoom(mediator.handler.GetSync(), pConnections, uuid)
 
-	slog.Info("creating room", "uuid", uuid)
+	slog.Info("created room", "uuid", uuid)
 
 	assert.NotNil(room, "room was nil")
 	return room
@@ -150,9 +154,11 @@ func (mediator *ServerMediator) CreateRoom(pConnections [2]*handlers.PlayerConne
 func (mediator *ServerMediator) SendMessage(connId uuid.UUID, msg message.Message) error {
 	assert.NotNil(mediator.serverData, "server data was nil")
 	assert.NotNil(msg, "message was nil")
-	
+
 	pConn, err := mediator.serverData.GetConnection(connId)
 
+	slog.Debug("sending message", "ip", pConn.GetConnection().GetRemoteIP(), "msg", msg)
+	
 	if err != nil {
 		return err
 	}
@@ -194,6 +200,8 @@ func (mediator *ServerMediator) DeleteConnection(id uuid.UUID) {
 
 	conn, err := mediator.serverData.GetConnection(id)
 	assert.NoError(err, "player connection does not exist")
+
+	slog.Debug("removing connection", "ip", conn.GetConnection().GetRemoteIP())
 
 	conn.EndLoop()
 

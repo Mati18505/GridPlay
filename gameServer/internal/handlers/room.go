@@ -149,9 +149,10 @@ func (room *Room) handleMove(eMove EventMove) {
 	err := room.eMovePlayer(eMove)
 
 	if err != nil {
+		slog.Info("handleMove error", "err", err)
 		room.eMoveSendErrorResponse(err, eMove.Player)
 		return
-	} 
+	}
 
 	room.eMoveSendSuccessResponse(eMove.Player)
 
@@ -261,6 +262,8 @@ func (room *Room) GetOpponent(playerID int) *Player {
 }
 
 func (room *Room) gameEndWinHandler(winner, loser uuid.UUID) {
+	slog.Debug("game win", "room", room.uuid, "winner", winner)
+	
 	winMsg := message.MakeMessage(message.TWinEvent, &message.WinMessage{
 		Status: "win",
 		Cause: "",
@@ -283,6 +286,8 @@ func (room *Room) gameEndWinHandler(winner, loser uuid.UUID) {
 }
 
 func (room *Room) gameEndDrawHandler(c1, c2 uuid.UUID) {
+	slog.Debug("game draw", "room", room.uuid)
+
 	drawMsg := message.MakeMessage(message.TWinEvent, &message.WinMessage{
 		Status: "draw",
 		Cause: "",

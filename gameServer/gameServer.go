@@ -4,6 +4,7 @@ import (
 	"TicTacToe/assert"
 	"TicTacToe/gameServer/internal/connection"
 	"TicTacToe/gameServer/internal/server/mediator"
+	"log/slog"
 	"net/http"
 
 	"github.com/gorilla/websocket"
@@ -24,6 +25,8 @@ func InitGameServer() *Server {
 func (srv *Server) HandleConnection(w http.ResponseWriter, r *http.Request) error {
 	assert.NotNil(srv.srvMediator, "mediator was nil")
 
+	slog.Debug("creating socket")
+
     socket, err := upgrader.Upgrade(w, r, nil)
 	defer r.Body.Close() 
 
@@ -31,6 +34,7 @@ func (srv *Server) HandleConnection(w http.ResponseWriter, r *http.Request) erro
         return err
     }
 
+	slog.Debug("adding socket as connection")
 	conn := connection.CreateConnection(socket)
 	srv.srvMediator.AddConnection(conn)
 
