@@ -83,7 +83,7 @@ func (mediator *ServerMediator) FromServerHandler(e event.Event) bool {
 
 		mediator.DeleteConnection(eRemoveRoom.ConnectionId)
 
-		slog.Debug("adding player to matcher", "uuid", eRemoveRoom.OpponentConnId)
+		slog.Debug("adding player to matcher", "uuid", eRemoveRoom.OpponentConnId.String())
 		mediator.matchmaker.Add(eRemoveRoom.OpponentConnId)
 
 		slog.Info("removing room", "uuid", eRemoveRoom.RoomUUID)
@@ -145,7 +145,7 @@ func (mediator *ServerMediator) CreateRoom(pConnections [2]*handlers.PlayerConne
 	uuid := mediator.GenerateUUID()
 	room := handlers.CreateRoom(mediator.handler.GetSync(), pConnections, uuid)
 
-	slog.Info("created room", "uuid", uuid)
+	slog.Info("created room", "uuid", uuid.String())
 
 	assert.NotNil(room, "room was nil")
 	return room

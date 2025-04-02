@@ -186,7 +186,7 @@ func (room *Room) eMoveSendErrorResponse(err error, player *Player) {
 
 	response.Approved = false
 	response.Reason = err.Error()
-	slog.Info("cannot handle move for", "player", player, "err", err)
+	slog.Info("cannot handle move for", "player uuid", player.connectionID.String(), "player game id", player.playerID, "err", err)
 
 	resMsg := message.MakeMessage(int(message.TMoveAns), response) 
 
