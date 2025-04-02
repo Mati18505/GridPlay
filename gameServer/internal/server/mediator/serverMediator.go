@@ -157,11 +157,11 @@ func (mediator *ServerMediator) SendMessage(connId uuid.UUID, msg message.Messag
 
 	pConn, err := mediator.serverData.GetConnection(connId)
 
-	slog.Debug("sending message", "ip", pConn.GetConnection().GetRemoteIP(), "msg", msg)
-	
 	if err != nil {
 		return err
 	}
+
+	slog.Debug("sending message", "ip", pConn.GetConnection().GetRemoteIP(), "msg", msg)
 
 	conn := pConn.GetConnection()
 	conn.SendMessage(msg)
