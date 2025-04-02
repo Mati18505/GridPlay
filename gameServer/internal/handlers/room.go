@@ -137,7 +137,7 @@ func (room *Room) handleExit(eExit EventDisconnect) {
 	}
 
 	if room.game.GetWinState() == winState.Values.None {
-		room.gameEndWinHandler(opponent.connectionID, eExit.ConnectionId)
+		room.gameEndWinOnePlayerHandler(opponent.connectionID)
 	}
 
 	room.sendToNextHandler(eRemoveRoom)
@@ -283,6 +283,21 @@ func (room *Room) gameEndWinHandler(winner, loser uuid.UUID) {
 		Msg: loseMsg,
 	})
 }
+
+func (room *Room) gameEndWinOnePlayerHandler(winner uuid.UUID) {
+	slog.Debug("game win", "room", room.uuid, "winner", winner)
+	
+	winMsg := message.MakeMessage(message.TWinEvent, &message.WinMessage{
+		Status: "win",
+		Cause: "",
+	})
+
+	room.sendToNextHandler(EventSendMessage{
+		ConnectionId: winner,
+		Msg: winMsg,
+	})
+}
+
 
 func (room *Room) gameEndDrawHandler(c1, c2 uuid.UUID) {
 	slog.Debug("game draw", "room", room.uuid)
