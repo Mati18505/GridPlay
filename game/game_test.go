@@ -53,6 +53,7 @@ func TestGameDraw(t *testing.T) {
 	require.NoError(t, game.Move(Pos{1,1}))
 	require.NoError(t, game.Move(Pos{0,2}))
 	require.NoError(t, game.Move(Pos{1,2}))
+	require.NoError(t, game.Move(Pos{2,2}))
 	// Game ends here. draw
 
 	require.Equal(t, game.GetWinState(), winState.Values.Draw)

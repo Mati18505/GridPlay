@@ -97,7 +97,7 @@ func (game *Game) checkWinnerByLastMove() char {
 }
 
 func (game *Game) checkDraw() bool {
-    return game.moveHistory.Len() == int(math.Pow(3.0, 2.0)) - 1
+    return game.moveHistory.Len() == int(math.Pow(3.0, 2.0))
 }
 
 func (game *Game) Move(pos Pos) error {
