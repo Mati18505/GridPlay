@@ -160,7 +160,8 @@ func (mediator *ServerMediator) SendMessage(connId uuid.UUID, msg message.Messag
 	conn := pConn.GetConnection()
 	conn.SendMessage(msg)
 
-	return nil
+	err = conn.GetLastError()
+	return err
 }
 
 func (mediator *ServerMediator) GenerateUUID() uuid.UUID {

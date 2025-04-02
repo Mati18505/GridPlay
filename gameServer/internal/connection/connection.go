@@ -14,6 +14,7 @@ type Connection struct {
 	messageFromClient chan message.Message
 	exitChan chan bool
 	receives bool
+	err error
 }
 
 func CreateConnection(socket *websocket.Conn) *Connection {
@@ -46,9 +47,14 @@ func (conn *Connection) receiveMessages() {
 	assert.NotNil(conn.socket, "websocket was nil")
 
 	for {
+		if conn.err != nil {
+			break
+		}
+
 		_, data, err := conn.socket.ReadMessage()
 		if err != nil {
 			slog.Info("connection closed with", "ip", conn.GetRemoteIP())
+			conn.err = err
 			break;
 		}
 
@@ -66,18 +72,26 @@ func (conn *Connection) receiveMessages() {
 	conn.receives = false
 }
 
-func (conn *Connection) SendMessage(msg message.Message) error {
+func (conn *Connection) SendMessage(msg message.Message) bool {
 	assert.NotNil(msg, "msg was nil")
 	assert.NotNil(conn.socket, "websocket was nil")
 
-	data := msg.MarshallMessage()
-	err := conn.socket.WriteMessage(websocket.TextMessage, data)
+	if conn.err != nil {
+		return false
+	}
 
-	return err
+	data := msg.MarshallMessage()
+	conn.err = conn.socket.WriteMessage(websocket.TextMessage, data)
+
+	return true
 }
 
 func (conn *Connection) SendPing() error {
 	assert.NotNil(conn.socket, "websocket was nil")
+
+	if conn.err != nil {
+		return conn.err
+	}
 
 	return conn.socket.WriteMessage(websocket.PingMessage, []byte("ping"))
 }
@@ -94,4 +108,8 @@ func (conn *Connection) GetMessageFromClient() <-chan message.Message {
 
 func (conn *Connection) GetExitChan() <-chan bool {
 	return conn.exitChan
+}
+
+func (conn *Connection) GetLastError() error {
+	return conn.err
 }
