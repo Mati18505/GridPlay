@@ -36,13 +36,19 @@ func CreatePlayerConnection(serverHandler Handler, uuid uuid.UUID, conn *connect
 
 func (playerConn *PlayerConnection) StartLoop() {
 	assert.Assert(!playerConn.isLoopRunning, "loop was already running")
+	assert.NotNil(playerConn.connection, "connection was nil")
 
 	go playerConn.loop()
 	playerConn.isLoopRunning = true
+
+	playerConn.connection.StartReceiving()
 }
 
 func (playerConn *PlayerConnection) EndLoop() {
 	assert.Assert(playerConn.isLoopRunning, "loop wasn't running")
+	assert.NotNil(playerConn.connection, "connection was nil")
+
+	playerConn.connection.StopReceiving()
 
 	playerConn.stopLoop <- true
 	playerConn.isLoopRunning = false
