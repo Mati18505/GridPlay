@@ -66,7 +66,7 @@ func (mediator *ServerMediator) FromServerHandler(e event.Event) bool {
 		err := mediator.SendMessage(eSendMessage.ConnectionId, eSendMessage.Msg)
 
 		if err != nil {
-			slog.Warn("Cannot send message to connection %v, %s", eSendMessage.ConnectionId, err)
+			slog.Warn("Cannot send message to connection", "ip", eSendMessage.ConnectionId, "err", err)
 		}
 		
 	case event.EventTypeDisconnect:
