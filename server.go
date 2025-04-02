@@ -2,38 +2,79 @@ package main
 
 import (
 	"log"
+	"log/slog"
 	"net/http"
+	"os"
+	"time"
 
-	"github.com/gorilla/websocket"
-
+	"TicTacToe/assert"
 	"TicTacToe/gameServer"
+
+	"github.com/lmittmann/tint"
 )
 
 var srv *gameServer.Server
+var loopStopSignal chan bool
+var isLoopRunning bool
 
 func handleConnections(w http.ResponseWriter, r *http.Request) {
-    socket, err := upgrader.Upgrade(w, r, nil)
-	
-    if err != nil {
-		log.Println(err)
-		r.Body.Close() // Is it needed?
-        return
-    }
+	assert.NotNil(srv, "server was nil")
 
-	conn := gameServer.CreateConnection(socket)
-	err = srv.AddConnection(conn)
+	err := srv.HandleConnection(w, r)
+
 	if err != nil {
-		log.Println("cannot add connection")
+		slog.Error("cannot add connection", "error", err)
 	}
 }
 
+func loop() {
+	assert.NotNil(srv, "server was nil")
+
+	for {
+		select {
+		case <- time.After(time.Millisecond * 50):
+			srv.Update()
+		case <- loopStopSignal:
+			return
+		}
+	}
+}
+
+func startLoop() {
+	assert.Assert(!isLoopRunning, "loop was already running")
+	assert.NotNil(srv, "server was nil")
+
+	go loop()
+	srv.StartLoop()
+}
+
+func stopLoop() {
+	assert.Assert(isLoopRunning, "loop wasn't running")
+	assert.NotNil(srv, "server was nil")
+
+	loopStopSignal <- true
+	srv.StopLoop()
+}
+
 func main() {
+	assertFile, err := os.Create("assert.txt")
+	assert.NoError(err, "unable to open assert file")
+	assert.ToWriter(assertFile)
+
+	w := os.Stderr
+
+	slog.SetDefault(slog.New(
+		tint.NewHandler(w, &tint.Options{
+			Level:      slog.LevelInfo,
+			TimeFormat: time.Kitchen,
+		}), 
+	))
+
 	srv = gameServer.InitGameServer()
-	/*
-	&server{
-		connections: make(map[*websocket.Conn]connection),
-		rooms: make([]*room, 0),
-	}*/
+
+	startLoop()
+	defer stopLoop()
+
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	http.HandleFunc("/ws", handleConnections)
 
@@ -42,12 +83,4 @@ func main() {
 	if e != nil {
 		log.Fatal("ListenAndServe: ", e)
 	}
-}
-
-var upgrader = websocket.Upgrader {
-	ReadBufferSize:  2048,
-	WriteBufferSize: 2048,
-	CheckOrigin: func(r *http.Request) bool {
-		return true
-	},
 }

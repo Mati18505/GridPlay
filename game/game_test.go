@@ -1,22 +1,30 @@
 package game
 
 import (
+	"TicTacToe/assert"
 	"TicTacToe/game/winState"
 	"container/list"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
 
+func TestMain(m *testing.M) {
+    setup()
+    code := m.Run() 
+    os.Exit(code)
+}
+
+func setup() {
+	assertFile, err := os.Create("assert.txt")
+	assert.NoError(err, "unable to open assert file")
+	assert.ToWriter(assertFile)
+}
+
 func TestGameEnd(t *testing.T) {
-	p1 := &Player{}
-	p2 := &Player{}
-	game := CreateGame(p1, p2)
+	game := CreateGame()
 
-	require.NotEqual(t, p1.GetChar(), p2.GetChar())
-	require.NotEqual(t, p1.GetID(), p2.GetID())
-
-	// TODO: set game round to p1
 	require.NoError(t, game.Move(Pos{0,0}))
 	require.NoError(t, game.Move(Pos{1,0}))
 	require.NoError(t, game.Move(Pos{1,1}))
@@ -29,20 +37,14 @@ func TestGameEnd(t *testing.T) {
 	require.Equal(t, state, winState.Values.Win)
 	winner := state.GetPlayer()
 
-	require.Equal(t, winner.Id, p1.id)
+	require.Equal(t, winner.Id, 0) // 0 = id of player 1
 
  	require.Error(t, game.Move(Pos{1, 2}))
 }
 
 func TestGameDraw(t *testing.T) {
-	p1 := &Player{}
-	p2 := &Player{}
-	game := CreateGame(p1, p2)
+	game := CreateGame()
 
-	require.NotEqual(t, p1.GetChar(), p2.GetChar())
-	require.NotEqual(t, p1.GetID(), p2.GetID())
-
-	// TODO: set game round to p1
 	require.NoError(t, game.Move(Pos{0,0}))
 	require.NoError(t, game.Move(Pos{2,0}))
 	require.NoError(t, game.Move(Pos{1,0}))
@@ -51,6 +53,7 @@ func TestGameDraw(t *testing.T) {
 	require.NoError(t, game.Move(Pos{1,1}))
 	require.NoError(t, game.Move(Pos{0,2}))
 	require.NoError(t, game.Move(Pos{1,2}))
+	require.NoError(t, game.Move(Pos{2,2}))
 	// Game ends here. draw
 
 	require.Equal(t, game.GetWinState(), winState.Values.Draw)
@@ -124,5 +127,24 @@ func TestGameWinChecker(t *testing.T) {
 		}
 
 		require.Equal(t, chkg.checkWinnerByLastMove(), char(x))
+	}
+}
+
+func TestGameOpponentChar(t *testing.T) {
+	require.Equal(t, OpponentChar(x), o)
+	require.Equal(t, OpponentChar(o), x)
+}
+
+func TestGameCharToRune(t *testing.T) {
+	require.Equal(t, e.GetRune(), ' ')
+	require.Equal(t, x.GetRune(), 'x')
+	require.Equal(t, o.GetRune(), 'o')
+}
+
+func TestRandomChar(t *testing.T) {
+	for range 16 {
+		randomChar := RandomChar()
+		require.Greater(t, randomChar, e)
+		require.LessOrEqual(t, randomChar, o)
 	}
 }

@@ -1,6 +1,7 @@
 package game
 
 import (
+	"TicTacToe/assert"
 	"TicTacToe/game/winState"
 	"container/list"
 	"errors"
@@ -16,12 +17,8 @@ func (p *Player) GetID() int {
 	return p.id
 }
 
-func (p *Player) GetChar() rune {
-	if p.char == x {
-		return 'x'
-	} else {
-		return 'o'
-	}
+func (p *Player) GetChar() char {
+	return p.char
 }
 
 type Pos struct {
@@ -36,14 +33,18 @@ type Game struct {
 	moveHistory list.List
 }
 
-func CreateGame(player1, player2 *Player) *Game {
-	player1.char = RandomChar()
-	player2.char = OpponentChar(player1.char)
-	player1.id = 0
-	player2.id = 1
+func CreateGame() *Game {
+	p1 := Player{
+		char: RandomChar(),
+		id: 0,
+	}
+	p2 := Player{
+		char: OpponentChar(p1.char),
+		id: 1,
+	}
 
 	game := &Game{
-		players: [2]Player{*player1, *player2},
+		players: [2]Player{p1, p2},
 		state: createEmptyState(),
 		winState: winState.Values.None,
 		moveHistory: *list.New(),
@@ -68,12 +69,12 @@ func areEqual[t comparable](v1, v2, v3 t) bool {
 
 func (game *Game) checkWinnerByLastMove() char {
     var winner char
-	state := game.state
 
+	state := game.state
 	lastMove, err := game.getLastMove()
 
 	if err != nil  {
-		return 0
+		return e
 	}
 
 	pos := lastMove.pos
@@ -91,15 +92,19 @@ func (game *Game) checkWinnerByLastMove() char {
         winner = state[2][0]
     }
 
+	assert.Assert(winner >= 0 && winner <= 2, "winner out of range", "winner", winner)
     return winner
 }
 
 func (game *Game) checkDraw() bool {
-    return game.moveHistory.Len() == int(math.Pow(3.0, 2.0)) - 1
+    return game.moveHistory.Len() == int(math.Pow(3.0, 2.0))
 }
 
-
 func (game *Game) Move(pos Pos) error {
+	if pos.X < 0 || pos.Y < 0 || pos.X > 2 || pos.Y > 2 {
+		assert.Never("position is out of range", "pos", pos)
+	}
+
 	if game.winState != winState.Values.None {
 		return errors.New("cannot move after game ended")
 	}
@@ -129,6 +134,11 @@ func (game *Game) Move(pos Pos) error {
 }
 
 func (game *Game) check(pos Pos, c char) error {
+	if pos.X < 0 || pos.Y < 0 || pos.X > 2 || pos.Y > 2 {
+		assert.Never("position is out of range", "pos", pos)
+	}
+	assert.Assert(c >= 0 && c <= 2, "char out of range", "char", c)
+
 	if game.state[pos.X][pos.Y] != e {
 		return errors.New("cell is not empty")
 	}
@@ -165,5 +175,15 @@ func (game *Game) getLastMove() (move, error) {
 		return move{}, errors.New("there are no moves")
 	}
 
-	return lastMove.Value.(move), nil
+	m, ok := lastMove.Value.(move)
+	assert.Assert(ok, "type assertion failed for value move")
+
+	return m, nil
+}
+
+func (game *Game) GetPlayerWithId(id int) Player {
+	if id < 0 || id > 1 {
+		assert.Never("player id must be 0 or 1", "player id", id)
+	}
+	return game.players[id]
 }
