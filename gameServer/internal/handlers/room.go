@@ -149,7 +149,6 @@ func (room *Room) handleMove(eMove EventMove) {
 	err := room.eMovePlayer(eMove)
 
 	if err != nil {
-		slog.Info("handleMove error", "err", err)
 		room.eMoveSendErrorResponse(err, eMove.Player)
 		return
 	}
