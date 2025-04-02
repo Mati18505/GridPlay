@@ -9,6 +9,8 @@ import (
 
 	"TicTacToe/assert"
 	"TicTacToe/gameServer"
+
+	"github.com/lmittmann/tint"
 )
 
 var srv *gameServer.Server
@@ -58,6 +60,15 @@ func main() {
 	assertFile, err := os.Create("assert.txt")
 	assert.NoError(err, "unable to open assert file")
 	assert.ToWriter(assertFile)
+
+	w := os.Stderr
+
+	slog.SetDefault(slog.New(
+		tint.NewHandler(w, &tint.Options{
+			Level:      slog.LevelInfo,
+			TimeFormat: time.Kitchen,
+		}), 
+	))
 
 	srv = gameServer.InitGameServer()
 
