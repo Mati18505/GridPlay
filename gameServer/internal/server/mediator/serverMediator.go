@@ -82,12 +82,9 @@ func (mediator *ServerMediator) FromServerHandler(e event.Event) bool {
 		assert.NotNil(mediator.serverData, "serverData was nil")
 
 		mediator.DeleteConnection(eRemoveRoom.ConnectionId)
+		mediator.AddConnectionToMatchmaker(eRemoveRoom.OpponentConnId)
 
-		slog.Debug("adding player to matcher", "uuid", eRemoveRoom.OpponentConnId.String())
-		mediator.matchmaker.Add(eRemoveRoom.OpponentConnId)
-
-		slog.Info("removing room", "uuid", eRemoveRoom.RoomUUID)
-		mediator.serverData.RemoveRoom(eRemoveRoom.RoomUUID)
+		mediator.RemoveRoom(eRemoveRoom.RoomUUID)
 	default:
 		return false
 	}
@@ -151,6 +148,14 @@ func (mediator *ServerMediator) CreateRoom(pConnections [2]*handlers.PlayerConne
 	return room
 }
 
+func (mediator *ServerMediator) RemoveRoom(uuid uuid.UUID) {
+	_, err := mediator.serverData.GetRoom(uuid)
+	assert.NoError(err, "room does not exist")
+
+	slog.Info("removing room", "uuid", uuid)
+	mediator.serverData.RemoveRoom(uuid)
+}
+
 func (mediator *ServerMediator) SendMessage(connId uuid.UUID, msg message.Message) error {
 	assert.NotNil(mediator.serverData, "server data was nil")
 	assert.NotNil(msg, "message was nil")
@@ -210,6 +215,14 @@ func (mediator *ServerMediator) DeleteConnection(id uuid.UUID) {
 	conn.EndLoop()
 
 	mediator.serverData.RemoveConnection(id)
+}
+
+func (mediator *ServerMediator) AddConnectionToMatchmaker(uuid uuid.UUID) {
+	_, err := mediator.serverData.GetConnection(uuid)
+	assert.NoError(err, "connection does not exist")
+
+	slog.Debug("adding player to matchmaker", "uuid", uuid.String())
+	mediator.matchmaker.Add(uuid)
 }
 
 func (mediator *ServerMediator) Update() {
