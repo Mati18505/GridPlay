@@ -38,6 +38,19 @@ func (srvData *ServerData) RemoveRoom(roomUUID uuid.UUID) {
 	delete(srvData.rooms, roomUUID)
 }
 
+func (srvData *ServerData) GetRoom(roomUUID uuid.UUID) (*handlers.Room, error) {
+	srvData.mut.Lock()
+	defer srvData.mut.Unlock()
+
+	room, ok := srvData.rooms[roomUUID]
+
+	if !ok {
+		return nil, errors.New("room does not exist")
+	}
+
+	return room, nil
+}
+
 func (srvData *ServerData) ForEachRoom(f func (room *handlers.Room)) {
 	srvData.mut.Lock()
 	defer srvData.mut.Unlock()
