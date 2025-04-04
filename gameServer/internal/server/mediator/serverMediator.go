@@ -156,12 +156,17 @@ func (mediator *ServerMediator) SendMessage(connId uuid.UUID, msg message.Messag
 	assert.NotNil(msg, "message was nil")
 
 	pConn, err := mediator.serverData.GetConnection(connId)
+	ip := "unaccessible"
+
+	if pConn != nil {
+		ip = pConn.GetConnection().GetRemoteIP()
+	}
+
+	slog.Debug("sending message", "ip", ip, "msg", msg)
 
 	if err != nil {
 		return err
 	}
-
-	slog.Debug("sending message", "ip", pConn.GetConnection().GetRemoteIP(), "msg", msg)
 
 	conn := pConn.GetConnection()
 	conn.SendMessage(msg)
