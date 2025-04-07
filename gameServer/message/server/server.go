@@ -2,10 +2,10 @@ package server
 
 import (
 	"TicTacToe/assert"
-	"encoding/json"
+	"TicTacToe/gameServer/message"
 )
 
-type MsgType int
+type MsgType message.MsgType
 const (
 	TMatchStarted MsgType = iota
 	TMoveAns
@@ -13,15 +13,6 @@ const (
 	TWinEvent
 	TNotAllowedErr
 )
-
-type MessageHeader struct {
-	Type MsgType `json:"type"`
-}
-
-type Message struct {
-	MessageHeader
-	Data any `json:"data"`
-}
 
 type MatchStarted struct {
 	Char rune `json:"char"`
@@ -47,35 +38,6 @@ type NotAllowedErrMessage struct {
 	Reason string `json:"reason"`
 }
 
-func (msg Message) MarshalMessage() []byte {
-	bytes, err := json.Marshal(&msg)
-	assert.NoError(err, "cannot marshal message")
-
-	return bytes
-}
-
-func CreateHeader(msgType MsgType) MessageHeader {
-	msgHeader := MessageHeader{
-		Type: msgType,
-	}
-
-	return msgHeader
-}
-
-func WrapMessage(header MessageHeader, data any) Message {
-	return Message{
-		MessageHeader: header,
-		Data: data,
-	}
-}
-
-func MakeMessage[T any](msgType MsgType, msgData T) Message {
-	header := CreateHeader(msgType)
-	msg := WrapMessage(header, msgData)
-
-	return msg
-}
-
 func (msgT MsgType) String() string { 
 	switch msgT {
 	case TMatchStarted:
@@ -92,4 +54,10 @@ func (msgT MsgType) String() string {
 		assert.Never("unknown type of server message", "server message", msgT)
 		return "unknown"
 	}
+}
+
+func MakeMessage[T any](msgType MsgType, msgData T) message.Message {
+	msg := message.MakeMessage(message.MsgType(msgType), msgData)
+
+	return msg
 }

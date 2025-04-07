@@ -4,15 +4,14 @@ import (
 	"log/slog"
 
 	"TicTacToe/assert"
-	"TicTacToe/gameServer/message/client"
-	"TicTacToe/gameServer/message/server"
+	"TicTacToe/gameServer/message"
 
 	"github.com/gorilla/websocket"
 )
 
 type Connection struct {
 	socket  *websocket.Conn
-	messageFromClient chan client.Message
+	messageFromClient chan message.Message
 	exitChan chan bool
 	receives bool
 	err error
@@ -23,7 +22,7 @@ func CreateConnection(socket *websocket.Conn) *Connection {
 
 	return &Connection{
 		socket: socket,
-		messageFromClient: make(chan client.Message),
+		messageFromClient: make(chan message.Message),
 		exitChan: make(chan bool),
 		receives: false,
 	}
@@ -60,7 +59,7 @@ func (conn *Connection) receiveMessages() {
 			break;
 		}
 
-		msg, err := client.UnmarshalMessage(data)
+		msg, err := message.UnmarshalMessage(data)
 		if err != nil {
 			slog.Warn("cannot unmarshal message, received from", "ip", conn.GetRemoteIP())
 			continue
@@ -74,7 +73,7 @@ func (conn *Connection) receiveMessages() {
 	conn.receives = false
 }
 
-func (conn *Connection) SendMessage(msg server.Message) bool {
+func (conn *Connection) SendMessage(msg message.Message) bool {
 	assert.NotNil(msg, "msg was nil")
 	assert.NotNil(conn.socket, "websocket was nil")
 
@@ -104,7 +103,7 @@ func (conn *Connection) GetRemoteIP() string {
 	return conn.socket.NetConn().RemoteAddr().String();
 }
 
-func (conn *Connection) GetMessageFromClient() <-chan client.Message {
+func (conn *Connection) GetMessageFromClient() <-chan message.Message {
 	return conn.messageFromClient
 }
 

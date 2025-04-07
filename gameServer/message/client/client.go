@@ -2,46 +2,17 @@ package client
 
 import (
 	"TicTacToe/assert"
-	"encoding/json"
-	"errors"
+	"TicTacToe/gameServer/message"
 )
 
-type MsgType int
+type MsgType message.MsgType
 const (
 	TMove MsgType = iota
 )
 
-type MessageHeader struct {
-	Type MsgType `json:"type"`
-}
-
-type Message struct {
-	MessageHeader
-	Data any `json:"data"`
-}
-
 type MoveMessage struct {
 	X int `json:"x"`
 	Y int `json:"y"`
-}
-
-func UnmarshalMessage(bytes []byte) (Message, error) {
-	var msg Message
-	err := json.Unmarshal(bytes, &msg)
-
-	if err != nil {
-		return msg, errors.New("can't unmarshal message")
-	}
-	
-	return msg, nil
-}
-
-func CreateHeader(msgType MsgType) MessageHeader {
-	msgHeader := MessageHeader{
-		Type: msgType,
-	}
-
-	return msgHeader
 }
 
 func (msgT MsgType) String() string { 
@@ -54,17 +25,8 @@ func (msgT MsgType) String() string {
 	}
 }
 
-func GetConcreteMessage[T any](message Message) (T, error) {
-	var concrete T
-	dataBytes, err := json.Marshal(message.Data)
-	if err != nil {
-		return concrete, errors.New("failed to marshal message data")
-	}
+func MakeMessage[T any](msgType MsgType, msgData T) message.Message {
+	msg := message.MakeMessage(message.MsgType(msgType), msgData)
 
-	err = json.Unmarshal(dataBytes, &concrete)
-	if err != nil {
-		return concrete, errors.New("failed to unmarshal message data into concrete type")
-	}
-
-	return concrete, nil
+	return msg
 }
