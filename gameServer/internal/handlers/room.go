@@ -4,7 +4,7 @@ import (
 	"TicTacToe/assert"
 	"TicTacToe/game"
 	"TicTacToe/game/winState"
-	"TicTacToe/gameServer/message/server"
+	"TicTacToe/gameServer/message/serverMsg"
 	"errors"
 	"log/slog"
 
@@ -93,7 +93,7 @@ func (room *Room) sendMatchStartedMessage(player *Player) {
 	playerChar := gamePlayer.GetChar()
 	opponentChar := game.OpponentChar(playerChar)
 
-	matchStartMsg := server.MakeMessage(server.TMatchStarted, &server.MatchStarted{
+	matchStartMsg := serverMsg.MakeMessage(serverMsg.TMatchStarted, &serverMsg.MatchStarted{
 		Char: playerChar.GetRune(),
 		OpponentChar: opponentChar.GetRune(),
 	})
@@ -227,7 +227,7 @@ func (room *Room) eMoveSendErrorResponse(err error, player *Player) {
 
 	slog.Info("cannot handle move for", "player uuid", player.connectionID.String(), "player game id", player.playerID, "err", err)
 
-	msg := server.MakeMessage(server.TMoveAns, server.MoveRes{
+	msg := serverMsg.MakeMessage(serverMsg.TMoveAns, serverMsg.MoveRes{
 		Approved: false,
 		Reason: err.Error(),
 	})
@@ -241,7 +241,7 @@ func (room *Room) eMoveSendErrorResponse(err error, player *Player) {
 func (room *Room) eMoveSendSuccessResponse(player *Player) {
 	assert.NotNil(player, "player was nil")
 
-	msg := server.MakeMessage(server.TMoveAns, server.MoveRes{
+	msg := serverMsg.MakeMessage(serverMsg.TMoveAns, serverMsg.MoveRes{
 		Approved: true,
 	})
 	
@@ -255,7 +255,7 @@ func (room *Room) eMoveSendSuccessResponse(player *Player) {
 func (room *Room) eMoveSendMessageToOpponent(eMove EventMove, opponent *Player) {
 	assert.NotNil(opponent, "opponent was nil")
 
-	msgForOpponent := server.MakeMessage(server.TOpponentMove, &server.MoveMessage{
+	msgForOpponent := serverMsg.MakeMessage(serverMsg.TOpponentMove, &serverMsg.MoveMessage{
 		X: eMove.X,
 		Y: eMove.Y,
 	})
@@ -314,7 +314,7 @@ func (room *Room) GetOpponent(playerId int) *Player {
 func (room *Room) gameEndWinHandler(winner, loser uuid.UUID) {
 	slog.Debug("game win", "room", room.uuid, "winner", winner)
 	
-	winMsg := server.MakeMessage(server.TWinEvent, &server.WinMessage{
+	winMsg := serverMsg.MakeMessage(serverMsg.TWinEvent, &serverMsg.WinMessage{
 		Status: "win",
 		Cause: "",
 	})
@@ -324,7 +324,7 @@ func (room *Room) gameEndWinHandler(winner, loser uuid.UUID) {
 		Msg: winMsg,
 	})
 	
-	loseMsg := server.MakeMessage(server.TWinEvent, &server.WinMessage{
+	loseMsg := serverMsg.MakeMessage(serverMsg.TWinEvent, &serverMsg.WinMessage{
 		Status: "lose",
 		Cause: "",
 	})
@@ -338,7 +338,7 @@ func (room *Room) gameEndWinHandler(winner, loser uuid.UUID) {
 func (room *Room) gameEndWinOnePlayerHandler(winner uuid.UUID) {
 	slog.Debug("game win", "room", room.uuid, "winner", winner)
 	
-	winMsg := server.MakeMessage(server.TWinEvent, &server.WinMessage{
+	winMsg := serverMsg.MakeMessage(serverMsg.TWinEvent, &serverMsg.WinMessage{
 		Status: "win",
 		Cause: "",
 	})
@@ -353,7 +353,7 @@ func (room *Room) gameEndWinOnePlayerHandler(winner uuid.UUID) {
 func (room *Room) gameEndDrawHandler(c1, c2 uuid.UUID) {
 	slog.Debug("game draw", "room", room.uuid)
 
-	drawMsg := server.MakeMessage(server.TWinEvent, &server.WinMessage{
+	drawMsg := serverMsg.MakeMessage(serverMsg.TWinEvent, &serverMsg.WinMessage{
 		Status: "draw",
 		Cause: "",
 	})

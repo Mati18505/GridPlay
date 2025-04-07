@@ -4,7 +4,7 @@ import (
 	"TicTacToe/assert"
 	"TicTacToe/gameServer/internal/event"
 	"TicTacToe/gameServer/message"
-	"TicTacToe/gameServer/message/client"
+	"TicTacToe/gameServer/message/clientMsg"
 	"errors"
 
 	"github.com/google/uuid"
@@ -46,9 +46,9 @@ func (eType EventSendMessage) GetType() event.EventType {
 func EventFromClientMessage(msg message.Message) (event.Event, error) {
 	assert.NotNil(msg, "message was nil")
 
-	switch client.MsgType(msg.Type) {
-	case client.TMove:
-		moveMsg, err := message.GetConcreteMessage[client.MoveMessage](msg)
+	switch clientMsg.MsgType(msg.Type) {
+	case clientMsg.TMove:
+		moveMsg, err := message.GetConcreteMessage[clientMsg.MoveMessage](msg)
 		if err != nil {
 			return nil, err
 		}

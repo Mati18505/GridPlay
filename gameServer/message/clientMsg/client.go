@@ -1,4 +1,4 @@
-package client
+package clientMsg
 
 import (
 	"TicTacToe/assert"

@@ -6,7 +6,7 @@ import (
 	"TicTacToe/assert"
 	"TicTacToe/gameServer/internal/connection"
 	"TicTacToe/gameServer/internal/event"
-	"TicTacToe/gameServer/message/server"
+	"TicTacToe/gameServer/message/serverMsg"
 
 	"github.com/google/uuid"
 )
@@ -72,7 +72,7 @@ func (pConn *PlayerConnection) Handle(e event.Event) {
 	} else {
 		slog.Info("cannot do this while game is not running")
 
-		message := server.MakeMessage(server.TNotAllowedErr, &server.NotAllowedErrMessage{
+		message := serverMsg.MakeMessage(serverMsg.TNotAllowedErr, &serverMsg.NotAllowedErrMessage{
 			Reason: "cannot do this while game is not running",
 		})
 
