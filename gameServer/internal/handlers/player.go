@@ -32,7 +32,7 @@ func CreatePlayer(nextHandler Handler, connId uuid.UUID, playerId int) *Player {
 func (player *Player) Handle(e event.Event) {
 	eType := e.GetType()
 
-	slog.Debug("event in player", "Type", eType)
+	slog.Debug("event in player", "Type", eType, "event", e)
 
 	switch eType {
 	case event.EventTypeMove:

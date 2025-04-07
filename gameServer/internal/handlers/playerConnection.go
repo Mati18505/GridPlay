@@ -6,6 +6,7 @@ import (
 	"TicTacToe/assert"
 	"TicTacToe/gameServer/internal/connection"
 	"TicTacToe/gameServer/internal/event"
+	"TicTacToe/gameServer/message/clientMsg"
 	"TicTacToe/gameServer/message/serverMsg"
 
 	"github.com/google/uuid"
@@ -87,7 +88,7 @@ func (pConn *PlayerConnection) loop() {
 	for {
 		select {
 		case msg := <- conn.GetMessageFromClient():
-			slog.Debug("received message from", "ip", remoteIP, "Type", msg.Type)
+			slog.Debug("received message from", "ip", remoteIP, "type", clientMsg.MsgType(msg.Type), "data", msg.Data)
 
 			e, err := EventFromClientMessage(msg)
 

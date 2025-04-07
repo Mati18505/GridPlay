@@ -113,7 +113,7 @@ func (room *Room) Update() {
 func (room *Room) Handle(e event.Event) { 
 	eType := e.GetType()
 
-	slog.Debug("event in room", "Type", eType)
+	slog.Debug("event in room", "Type", eType, "event", e)
 
 	switch eType {
 	case event.EventTypeMove:

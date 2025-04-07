@@ -9,6 +9,7 @@ import (
 	"TicTacToe/gameServer/internal/server/serverData"
 	"TicTacToe/gameServer/internal/server/serverEvents"
 	"TicTacToe/gameServer/message"
+	"TicTacToe/gameServer/message/serverMsg"
 	"log/slog"
 
 	"github.com/google/uuid"
@@ -164,7 +165,7 @@ func (mediator *ServerMediator) SendMessage(connId uuid.UUID, msg message.Messag
 		ip = pConn.GetConnection().GetRemoteIP()
 	}
 
-	slog.Debug("sending message", "ip", ip, "msg", msg)
+	slog.Debug("sending message", "ip", ip, "type", serverMsg.MsgType(msg.Type), "data", msg.Data)
 
 	if err != nil {
 		return err

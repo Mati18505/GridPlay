@@ -3,6 +3,7 @@ package serverMsg
 import (
 	"TicTacToe/assert"
 	"TicTacToe/gameServer/message"
+	"fmt"
 )
 
 type MsgType message.MsgType
@@ -60,4 +61,8 @@ func MakeMessage[T any](msgType MsgType, msgData T) message.Message {
 	msg := message.MakeMessage(message.MsgType(msgType), msgData)
 
 	return msg
+}
+
+func (msg MatchStarted) String() string {
+	return fmt.Sprintf("Char: %s OpponentChar: %s", string(msg.Char), string(msg.OpponentChar))
 }
