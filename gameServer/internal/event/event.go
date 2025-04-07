@@ -1,5 +1,7 @@
 package event
 
+import "TicTacToe/assert"
+
 type Event interface {
 	GetType() EventType
 }
@@ -20,3 +22,23 @@ const (
 	// server
 	EventTypePlayersMatched
 )
+
+func (eType EventType) String() string {
+	switch eType {
+	case EventTypeNone:
+		return "None"
+	case EventTypeDisconnect:
+		return "Disconnect"
+	case EventTypeRemoveRoom:
+		return "RemoveRoom"
+	case EventTypeMove:
+		return "Move"
+	case EventTypeSendMessage:
+		return "SendMessage"
+	case EventTypePlayersMatched:
+		return "PlayersMatched"
+	default:
+		assert.Never("unknown type of event", "server event", eType)
+		return "Unknown"
+	}
+}

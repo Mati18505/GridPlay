@@ -59,6 +59,8 @@ func (mediator *ServerMediator) Notify(e serverEvents.MediatorEvent) {
 
 func (mediator *ServerMediator) FromServerHandler(e event.Event) bool {
 	eType := e.GetType()
+	slog.Debug("event in server mediator", "Type", eType, "event", e)
+
 	switch eType {
 	case event.EventTypeSendMessage:
 		eSendMessage, ok := e.(handlers.EventSendMessage)
