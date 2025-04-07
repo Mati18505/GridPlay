@@ -16,8 +16,6 @@ type EventDisconnect struct {
 
 type EventRemoveRoom struct {
 	RoomUUID uuid.UUID
-	ConnectionId uuid.UUID
-	OpponentConnId uuid.UUID
 }
 
 type EventMove struct {

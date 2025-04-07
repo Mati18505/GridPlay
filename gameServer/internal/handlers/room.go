@@ -19,6 +19,7 @@ type Room struct {
 	sync *Synchronizer
 	game        *game.Game
 	players [2]*Player
+	gameActive bool
 }
 
 func CreateRoom(nextHandler Handler, pConnections [2]*PlayerConnection, uuid uuid.UUID) *Room {
@@ -29,6 +30,7 @@ func CreateRoom(nextHandler Handler, pConnections [2]*PlayerConnection, uuid uui
 	room := &Room{
 		nextHandler: nextHandler,
 		uuid: uuid,
+		gameActive: false,
 	}
 	room.sync = CreateSynchronizer(room)
 	room.players = room.createPlayers(pConnections)
@@ -36,11 +38,18 @@ func CreateRoom(nextHandler Handler, pConnections [2]*PlayerConnection, uuid uui
 
 	assert.NotNil(room.sync, "room sync was nil")
 	assert.NotNil(room.game, "game was nil")
+	room.startGame()
+
+	assert.Assert(room.gameActive, "gameActive must be true")
+	return room
+}
+
+func (room *Room) startGame() {
+	assert.Assert(!room.gameActive, "game already started")
 
 	room.sendMatchStartedMessage(room.players[0])
 	room.sendMatchStartedMessage(room.players[1])
-
-	return room
+	room.gameActive = true
 }
 
 func (room *Room) GetUUID() uuid.UUID {
@@ -128,18 +137,50 @@ func (room *Room) handleExit(eExit EventDisconnect) {
 	assert.NotNil(eExit.Player, "event exit player was nil")
 	assert.NotNil(room.game, "game was nil")
 
-	opponent := room.GetOpponent(eExit.Player.playerID)
+	room.sendToNextHandler(eExit)
 
-	eRemoveRoom := EventRemoveRoom{
-		RoomUUID: room.GetUUID(),
-		ConnectionId: eExit.ConnectionId,
-		OpponentConnId: opponent.connectionID,
+	playerId := eExit.Player.playerID
+	opponentId := room.GetOpponentId(playerId)
+
+	if room.gameActive {
+		room.handleExitFirstPlayer(playerId, opponentId)
+
+	} else {
+		room.handleExitLastPlayer(playerId, opponentId)
 	}
+}
 
-	if room.game.GetWinState() == winState.Values.None {
+func (room *Room) handleExitFirstPlayer(playerId, opponentId int) {
+	assert.NotNil(room.players, "players was nil")
+	assert.Assert(room.gameActive, "game should be active")
+
+	opponent := room.players[opponentId]
+
+	// This player exit first, so opponent should be online, in room.
+	assert.NotNil(opponent, "opponent should not be nil")
+
+	if !room.gameHasEnded() {
 		room.gameEndWinOnePlayerHandler(opponent.connectionID)
 	}
 
+	room.players[playerId] = nil
+	room.gameActive = false
+}
+
+func (room *Room) handleExitLastPlayer(playerId, opponentId int) {
+	assert.NotNil(room.players, "players was nil")
+	assert.Assert(!room.gameActive, "game should not be active")
+
+	opponent := room.players[opponentId]
+
+	// This player exit last, so opponent should NOT be online and shouldn't be in room.
+	assert.Assert(opponent == nil, "opponent should be nil")
+
+	eRemoveRoom := EventRemoveRoom{
+		RoomUUID: room.GetUUID(),
+	}
+
+	room.players[playerId] = nil
 	room.sendToNextHandler(eRemoveRoom)
 }
 
@@ -152,6 +193,8 @@ func (room *Room) handleMove(eMove EventMove) {
 		room.eMoveSendErrorResponse(err, eMove.Player)
 		return
 	}
+
+	assert.Assert(room.gameActive, "game should be active")
 
 	room.eMoveSendSuccessResponse(eMove.Player)
 
@@ -227,6 +270,7 @@ func (room *Room) eMoveSendMessageToOpponent(eMove EventMove, opponent *Player) 
 func (room *Room) checkGameWin(eMove EventMove) {
 	assert.NotNil(room.game, "game was nil")
 	assert.NotNil(eMove.Player, "event move player was nil")
+	assert.Assert(room.gameActive, "game should be active")
 
 	wState := room.game.GetWinState()
 	player := eMove.Player
@@ -240,9 +284,7 @@ func (room *Room) checkGameWin(eMove EventMove) {
 }
 
 // TODO: unit test
-func (room *Room) GetOpponent(playerID int) *Player {
-	assert.NotNil(room.players, "players array was nil")
-
+func (room *Room) GetOpponentId(playerID int) int {
 	var opponentId int
 
 	switch playerID {
@@ -254,9 +296,19 @@ func (room *Room) GetOpponent(playerID int) *Player {
 		assert.Never("player id was out of range")
 	}
 
-	opponent := room.players[opponentId]
-	assert.NotNil(opponent, "opponent was nil")
+	return opponentId
+}
 
+func (room *Room) GetOpponent(playerId int) *Player {
+	assert.Assert(room.gameActive, "game should be active")
+	assert.NotNil(room.players, "players was nil")
+	
+	opponentId := room.GetOpponentId(playerId)
+	opponent := room.players[opponentId]
+
+	// Game is active, so opponent is not nil.
+	assert.NotNil(opponent, "opponent was nil")
+	
 	return opponent
 }
 
@@ -322,4 +374,10 @@ func (room *Room) sendToNextHandler(e event.Event) {
 	assert.NotNil(room.nextHandler, "room next handler was nil")
 
 	room.nextHandler.Handle(e)
+}
+
+func (room *Room) gameHasEnded() bool {
+	assert.NotNil(room.game, "game was nil")
+
+	return room.game.GetWinState() != winState.Values.None
 }

@@ -78,11 +78,6 @@ func (mediator *ServerMediator) FromServerHandler(e event.Event) bool {
 	case event.EventTypeRemoveRoom:
 		eRemoveRoom, ok := e.(handlers.EventRemoveRoom)
 		assert.Assert(ok, "type assertion failed for event remove room")
-		assert.NotNil(mediator.matchmaker, "matchmaker was nil")
-		assert.NotNil(mediator.serverData, "serverData was nil")
-
-		mediator.DeleteConnection(eRemoveRoom.ConnectionId)
-		mediator.AddConnectionToMatchmaker(eRemoveRoom.OpponentConnId)
 
 		mediator.RemoveRoom(eRemoveRoom.RoomUUID)
 	default:
@@ -149,6 +144,8 @@ func (mediator *ServerMediator) CreateRoom(pConnections [2]*handlers.PlayerConne
 }
 
 func (mediator *ServerMediator) RemoveRoom(uuid uuid.UUID) {
+	assert.NotNil(mediator.serverData, "serverData was nil")
+
 	_, err := mediator.serverData.GetRoom(uuid)
 	assert.NoError(err, "room does not exist")
 
