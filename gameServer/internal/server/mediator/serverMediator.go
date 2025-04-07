@@ -70,10 +70,10 @@ func (mediator *ServerMediator) FromServerHandler(e event.Event) bool {
 		}
 		
 	case event.EventTypeDisconnect:
-		eExit, ok := e.(handlers.EventDisconnect)
-		assert.Assert(ok, "type assertion failed for event exit")
+		eDisconnect, ok := e.(handlers.EventDisconnect)
+		assert.Assert(ok, "type assertion failed for event disconnect")
 
-		mediator.DeleteConnection(eExit.ConnectionId)
+		mediator.DeleteConnection(eDisconnect.ConnectionId)
 
 	case event.EventTypeRemoveRoom:
 		eRemoveRoom, ok := e.(handlers.EventRemoveRoom)

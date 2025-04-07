@@ -123,40 +123,40 @@ func (room *Room) Handle(e event.Event) {
 		room.handleMove(eMove)
 
 	case event.EventTypeDisconnect:
-		eExit, ok := e.(EventDisconnect)
-		assert.Assert(ok, "type assertion failed for event exit")
+		eDisconnect, ok := e.(EventDisconnect)
+		assert.Assert(ok, "type assertion failed for event disconnect")
 
-		room.handleExit(eExit)
+		room.handleDisconnect(eDisconnect)
 
 	default:
 		room.sendToNextHandler(e)
 	}
 }
 
-func (room *Room) handleExit(eExit EventDisconnect) {
-	assert.NotNil(eExit.Player, "event exit player was nil")
+func (room *Room) handleDisconnect(eDisconnect EventDisconnect) {
+	assert.NotNil(eDisconnect.Player, "event disconnect player was nil")
 	assert.NotNil(room.game, "game was nil")
 
-	room.sendToNextHandler(eExit)
+	room.sendToNextHandler(eDisconnect)
 
-	playerId := eExit.Player.playerID
+	playerId := eDisconnect.Player.playerID
 	opponentId := room.GetOpponentId(playerId)
 
 	if room.gameActive {
-		room.handleExitFirstPlayer(playerId, opponentId)
+		room.handleDisconnectFirstPlayer(playerId, opponentId)
 
 	} else {
-		room.handleExitLastPlayer(playerId, opponentId)
+		room.handleDisconnectLastPlayer(playerId, opponentId)
 	}
 }
 
-func (room *Room) handleExitFirstPlayer(playerId, opponentId int) {
+func (room *Room) handleDisconnectFirstPlayer(playerId, opponentId int) {
 	assert.NotNil(room.players, "players was nil")
 	assert.Assert(room.gameActive, "game should be active")
 
 	opponent := room.players[opponentId]
 
-	// This player exit first, so opponent should be online, in room.
+	// This player disconnect first, so opponent should be online, in room.
 	assert.NotNil(opponent, "opponent should not be nil")
 
 	if !room.gameHasEnded() {
@@ -167,13 +167,13 @@ func (room *Room) handleExitFirstPlayer(playerId, opponentId int) {
 	room.gameActive = false
 }
 
-func (room *Room) handleExitLastPlayer(playerId, opponentId int) {
+func (room *Room) handleDisconnectLastPlayer(playerId, opponentId int) {
 	assert.NotNil(room.players, "players was nil")
 	assert.Assert(!room.gameActive, "game should not be active")
 
 	opponent := room.players[opponentId]
 
-	// This player exit last, so opponent should NOT be online and shouldn't be in room.
+	// This player disconnect last, so opponent should NOT be online and shouldn't be in room.
 	assert.Assert(opponent == nil, "opponent should be nil")
 
 	eRemoveRoom := EventRemoveRoom{
