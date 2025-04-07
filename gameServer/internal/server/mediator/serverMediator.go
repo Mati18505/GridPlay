@@ -8,7 +8,7 @@ import (
 	"TicTacToe/gameServer/internal/server/matchmaker"
 	"TicTacToe/gameServer/internal/server/serverData"
 	"TicTacToe/gameServer/internal/server/serverEvents"
-	"TicTacToe/gameServer/message"
+	"TicTacToe/gameServer/message/server"
 	"log/slog"
 
 	"github.com/google/uuid"
@@ -153,7 +153,7 @@ func (mediator *ServerMediator) RemoveRoom(uuid uuid.UUID) {
 	mediator.serverData.RemoveRoom(uuid)
 }
 
-func (mediator *ServerMediator) SendMessage(connId uuid.UUID, msg message.Message) error {
+func (mediator *ServerMediator) SendMessage(connId uuid.UUID, msg server.Message) error {
 	assert.NotNil(mediator.serverData, "server data was nil")
 	assert.NotNil(msg, "message was nil")
 

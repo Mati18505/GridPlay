@@ -3,7 +3,8 @@ package handlers
 import (
 	"TicTacToe/assert"
 	"TicTacToe/gameServer/internal/event"
-	"TicTacToe/gameServer/message"
+	"TicTacToe/gameServer/message/client"
+	"TicTacToe/gameServer/message/server"
 	"errors"
 
 	"github.com/google/uuid"
@@ -26,7 +27,7 @@ type EventMove struct {
 
 type EventSendMessage struct {
 	ConnectionId uuid.UUID
-	Msg message.Message
+	Msg server.Message
 }
 
 func (eType EventDisconnect) GetType() event.EventType {
@@ -42,20 +43,19 @@ func (eType EventSendMessage) GetType() event.EventType {
 	return event.EventTypeSendMessage;
 }
 
-func EventFromMessage(msg message.Message) (event.Event, error) {
+func EventFromClientMessage(msg client.Message) (event.Event, error) {
 	assert.NotNil(msg, "message was nil")
 
-	switch message.ClientMsg(msg.Type) {
-	case message.Move:
-		data, err := message.ParseMessage[message.MoveMessage](msg)
-
+	switch msg.Type {
+	case client.TMove:
+		moveMsg, err := client.GetConcreteMessage[client.MoveMessage](msg)
 		if err != nil {
 			return nil, err
 		}
 
 		return EventMove{
-			X: data.X,
-			Y: data.Y,
+			X: moveMsg.X,
+			Y: moveMsg.Y,
 		}, nil
 
 	default:

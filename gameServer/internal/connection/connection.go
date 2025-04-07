@@ -4,14 +4,15 @@ import (
 	"log/slog"
 
 	"TicTacToe/assert"
-	"TicTacToe/gameServer/message"
+	"TicTacToe/gameServer/message/client"
+	"TicTacToe/gameServer/message/server"
 
 	"github.com/gorilla/websocket"
 )
 
 type Connection struct {
 	socket  *websocket.Conn
-	messageFromClient chan message.Message
+	messageFromClient chan client.Message
 	exitChan chan bool
 	receives bool
 	err error
@@ -22,7 +23,7 @@ func CreateConnection(socket *websocket.Conn) *Connection {
 
 	return &Connection{
 		socket: socket,
-		messageFromClient: make(chan message.Message),
+		messageFromClient: make(chan client.Message),
 		exitChan: make(chan bool),
 		receives: false,
 	}
@@ -59,7 +60,7 @@ func (conn *Connection) receiveMessages() {
 			break;
 		}
 
-		msg, err := message.UnmarshalMessage(data)
+		msg, err := client.UnmarshalMessage(data)
 		if err != nil {
 			slog.Warn("cannot unmarshal message, received from", "ip", conn.GetRemoteIP())
 			continue
@@ -73,7 +74,7 @@ func (conn *Connection) receiveMessages() {
 	conn.receives = false
 }
 
-func (conn *Connection) SendMessage(msg message.Message) bool {
+func (conn *Connection) SendMessage(msg server.Message) bool {
 	assert.NotNil(msg, "msg was nil")
 	assert.NotNil(conn.socket, "websocket was nil")
 
@@ -81,7 +82,7 @@ func (conn *Connection) SendMessage(msg message.Message) bool {
 		return false
 	}
 
-	data := msg.MarshallMessage()
+	data := msg.MarshalMessage()
 	conn.err = conn.socket.WriteMessage(websocket.TextMessage, data)
 
 	return true
@@ -103,7 +104,7 @@ func (conn *Connection) GetRemoteIP() string {
 	return conn.socket.NetConn().RemoteAddr().String();
 }
 
-func (conn *Connection) GetMessageFromClient() <-chan message.Message {
+func (conn *Connection) GetMessageFromClient() <-chan client.Message {
 	return conn.messageFromClient
 }
 

@@ -4,11 +4,11 @@ import (
 	"TicTacToe/assert"
 	"TicTacToe/game"
 	"TicTacToe/game/winState"
+	"TicTacToe/gameServer/message/server"
 	"errors"
 	"log/slog"
 
 	"TicTacToe/gameServer/internal/event"
-	"TicTacToe/gameServer/message"
 
 	"github.com/google/uuid"
 )
@@ -93,7 +93,7 @@ func (room *Room) sendMatchStartedMessage(player *Player) {
 	playerChar := gamePlayer.GetChar()
 	opponentChar := game.OpponentChar(playerChar)
 
-	matchStartMsg := message.MakeMessage(message.TMatchStarted, &message.MatchStarted{
+	matchStartMsg := server.MakeMessage(server.TMatchStarted, &server.MatchStarted{
 		Char: playerChar.GetRune(),
 		OpponentChar: opponentChar.GetRune(),
 	})
@@ -225,38 +225,37 @@ func (room *Room) eMoveSendErrorResponse(err error, player *Player) {
 	assert.NotNil(player, "player was nil")
 	assert.NotNil(err, "error was nil")
 
-	response := new(message.MoveRes) 
-
-	response.Approved = false
-	response.Reason = err.Error()
 	slog.Info("cannot handle move for", "player uuid", player.connectionID.String(), "player game id", player.playerID, "err", err)
 
-	resMsg := message.MakeMessage(int(message.TMoveAns), response) 
+	msg := server.MakeMessage(server.TMoveAns, server.MoveRes{
+		Approved: false,
+		Reason: err.Error(),
+	})
 
 	room.sendToNextHandler(EventSendMessage{
 		ConnectionId: player.connectionID,
-		Msg: resMsg,
+		Msg: msg,
 	})
 }
 
 func (room *Room) eMoveSendSuccessResponse(player *Player) {
 	assert.NotNil(player, "player was nil")
 
-	response := new(message.MoveRes) 
-	response.Approved = true
-
-	resMsg := message.MakeMessage(int(message.TMoveAns), response) 
+	msg := server.MakeMessage(server.TMoveAns, server.MoveRes{
+		Approved: true,
+	})
+	
 
 	room.sendToNextHandler(EventSendMessage{
 		ConnectionId: player.connectionID,
-		Msg: resMsg,
+		Msg: msg,
 	})
 }
 
 func (room *Room) eMoveSendMessageToOpponent(eMove EventMove, opponent *Player) {
 	assert.NotNil(opponent, "opponent was nil")
 
-	msgForOpponent := message.MakeMessage(message.TOpponentMove, &message.MoveMessage{
+	msgForOpponent := server.MakeMessage(server.TOpponentMove, &server.MoveMessage{
 		X: eMove.X,
 		Y: eMove.Y,
 	})
@@ -315,7 +314,7 @@ func (room *Room) GetOpponent(playerId int) *Player {
 func (room *Room) gameEndWinHandler(winner, loser uuid.UUID) {
 	slog.Debug("game win", "room", room.uuid, "winner", winner)
 	
-	winMsg := message.MakeMessage(message.TWinEvent, &message.WinMessage{
+	winMsg := server.MakeMessage(server.TWinEvent, &server.WinMessage{
 		Status: "win",
 		Cause: "",
 	})
@@ -325,7 +324,7 @@ func (room *Room) gameEndWinHandler(winner, loser uuid.UUID) {
 		Msg: winMsg,
 	})
 	
-	loseMsg := message.MakeMessage(message.TWinEvent, &message.WinMessage{
+	loseMsg := server.MakeMessage(server.TWinEvent, &server.WinMessage{
 		Status: "lose",
 		Cause: "",
 	})
@@ -339,7 +338,7 @@ func (room *Room) gameEndWinHandler(winner, loser uuid.UUID) {
 func (room *Room) gameEndWinOnePlayerHandler(winner uuid.UUID) {
 	slog.Debug("game win", "room", room.uuid, "winner", winner)
 	
-	winMsg := message.MakeMessage(message.TWinEvent, &message.WinMessage{
+	winMsg := server.MakeMessage(server.TWinEvent, &server.WinMessage{
 		Status: "win",
 		Cause: "",
 	})
@@ -354,7 +353,7 @@ func (room *Room) gameEndWinOnePlayerHandler(winner uuid.UUID) {
 func (room *Room) gameEndDrawHandler(c1, c2 uuid.UUID) {
 	slog.Debug("game draw", "room", room.uuid)
 
-	drawMsg := message.MakeMessage(message.TWinEvent, &message.WinMessage{
+	drawMsg := server.MakeMessage(server.TWinEvent, &server.WinMessage{
 		Status: "draw",
 		Cause: "",
 	})

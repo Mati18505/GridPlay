@@ -6,7 +6,7 @@ import (
 	"TicTacToe/assert"
 	"TicTacToe/gameServer/internal/connection"
 	"TicTacToe/gameServer/internal/event"
-	"TicTacToe/gameServer/message"
+	"TicTacToe/gameServer/message/server"
 
 	"github.com/google/uuid"
 )
@@ -72,7 +72,7 @@ func (pConn *PlayerConnection) Handle(e event.Event) {
 	} else {
 		slog.Info("cannot do this while game is not running")
 
-		message := message.MakeMessage(message.TNotAllowedErr, &message.NotAllowedErrMessage{
+		message := server.MakeMessage(server.TNotAllowedErr, &server.NotAllowedErrMessage{
 			Reason: "cannot do this while game is not running",
 		})
 
@@ -87,9 +87,9 @@ func (pConn *PlayerConnection) loop() {
 	for {
 		select {
 		case msg := <- conn.GetMessageFromClient():
-			slog.Debug("received message from", "ip", remoteIP, "Type", message.ClientMsg(msg.Type))
+			slog.Debug("received message from", "ip", remoteIP, "Type", msg.Type)
 
-			e, err := EventFromMessage(msg)
+			e, err := EventFromClientMessage(msg)
 
 			if err != nil {
 				slog.Warn("unknown type of message", "err", err)
