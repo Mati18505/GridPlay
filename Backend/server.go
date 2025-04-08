@@ -7,8 +7,8 @@ import (
 	"os"
 	"time"
 
-	"TicTacToe/assert"
-	"TicTacToe/gameServer"
+	"GridPlay/assert"
+	"GridPlay/gameServer"
 
 	"github.com/lmittmann/tint"
 )

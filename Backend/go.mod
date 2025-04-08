@@ -1,4 +1,4 @@
-module TicTacToe
+module GridPlay
 
 go 1.22.2
 

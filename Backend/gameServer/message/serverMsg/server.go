@@ -1,8 +1,8 @@
 package serverMsg
 
 import (
-	"TicTacToe/assert"
-	"TicTacToe/gameServer/message"
+	"GridPlay/assert"
+	"GridPlay/gameServer/message"
 	"fmt"
 )
 

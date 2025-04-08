@@ -1,15 +1,15 @@
 package mediator
 
 import (
-	"TicTacToe/assert"
-	"TicTacToe/gameServer/internal/connection"
-	"TicTacToe/gameServer/internal/event"
-	"TicTacToe/gameServer/internal/handlers"
-	"TicTacToe/gameServer/internal/server/matchmaker"
-	"TicTacToe/gameServer/internal/server/serverData"
-	"TicTacToe/gameServer/internal/server/serverEvents"
-	"TicTacToe/gameServer/message"
-	"TicTacToe/gameServer/message/serverMsg"
+	"GridPlay/assert"
+	"GridPlay/gameServer/internal/connection"
+	"GridPlay/gameServer/internal/event"
+	"GridPlay/gameServer/internal/handlers"
+	"GridPlay/gameServer/internal/server/matchmaker"
+	"GridPlay/gameServer/internal/server/serverData"
+	"GridPlay/gameServer/internal/server/serverEvents"
+	"GridPlay/gameServer/message"
+	"GridPlay/gameServer/message/serverMsg"
 	"log/slog"
 
 	"github.com/google/uuid"

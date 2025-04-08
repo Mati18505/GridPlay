@@ -1,9 +1,9 @@
 package gameServer
 
 import (
-	"TicTacToe/assert"
-	"TicTacToe/gameServer/internal/connection"
-	"TicTacToe/gameServer/internal/server/mediator"
+	"GridPlay/assert"
+	"GridPlay/gameServer/internal/connection"
+	"GridPlay/gameServer/internal/server/mediator"
 	"log/slog"
 	"net/http"
 

@@ -1,7 +1,7 @@
 package game
 
 import (
-	"TicTacToe/assert"
+	"GridPlay/assert"
 	"math/rand"
 )
 

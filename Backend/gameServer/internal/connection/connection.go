@@ -3,8 +3,8 @@ package connection
 import (
 	"log/slog"
 
-	"TicTacToe/assert"
-	"TicTacToe/gameServer/message"
+	"GridPlay/assert"
+	"GridPlay/gameServer/message"
 
 	"github.com/gorilla/websocket"
 )

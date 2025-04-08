@@ -1,6 +1,6 @@
 package event
 
-import "TicTacToe/assert"
+import "GridPlay/assert"
 
 type Event interface {
 	GetType() EventType

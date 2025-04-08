@@ -1,8 +1,8 @@
 package serverData
 
 import (
-	"TicTacToe/assert"
-	"TicTacToe/gameServer/internal/handlers"
+	"GridPlay/assert"
+	"GridPlay/gameServer/internal/handlers"
 	"errors"
 	"sync"
 

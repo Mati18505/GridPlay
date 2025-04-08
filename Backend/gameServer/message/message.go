@@ -1,7 +1,7 @@
 package message
 
 import (
-	"TicTacToe/assert"
+	"GridPlay/assert"
 	"encoding/json"
 	"errors"
 )

@@ -1,8 +1,8 @@
 package game
 
 import (
-	"TicTacToe/assert"
-	"TicTacToe/game/winState"
+	"GridPlay/assert"
+	"GridPlay/game/winState"
 	"container/list"
 	"os"
 	"testing"

@@ -1,10 +1,10 @@
 package matchmaker
 
 import (
-	"TicTacToe/assert"
-	"TicTacToe/gameServer/internal/event"
-	"TicTacToe/gameServer/internal/server"
-	"TicTacToe/gameServer/internal/server/serverEvents"
+	"GridPlay/assert"
+	"GridPlay/gameServer/internal/event"
+	"GridPlay/gameServer/internal/server"
+	"GridPlay/gameServer/internal/server/serverEvents"
 
 	"github.com/google/uuid"
 )

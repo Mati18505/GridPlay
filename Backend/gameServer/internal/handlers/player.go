@@ -5,8 +5,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"TicTacToe/assert"
-	"TicTacToe/gameServer/internal/event"
+	"GridPlay/assert"
+	"GridPlay/gameServer/internal/event"
 )
 
 type Player struct {

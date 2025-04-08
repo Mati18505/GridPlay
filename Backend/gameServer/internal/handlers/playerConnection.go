@@ -3,11 +3,11 @@ package handlers
 import (
 	"log/slog"
 
-	"TicTacToe/assert"
-	"TicTacToe/gameServer/internal/connection"
-	"TicTacToe/gameServer/internal/event"
-	"TicTacToe/gameServer/message/clientMsg"
-	"TicTacToe/gameServer/message/serverMsg"
+	"GridPlay/assert"
+	"GridPlay/gameServer/internal/connection"
+	"GridPlay/gameServer/internal/event"
+	"GridPlay/gameServer/message/clientMsg"
+	"GridPlay/gameServer/message/serverMsg"
 
 	"github.com/google/uuid"
 )

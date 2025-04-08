@@ -1,7 +1,7 @@
 package matchmaker
 
 import (
-	"TicTacToe/gameServer/internal/event"
+	"GridPlay/gameServer/internal/event"
 
 	"github.com/google/uuid"
 )

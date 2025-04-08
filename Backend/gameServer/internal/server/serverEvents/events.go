@@ -1,7 +1,7 @@
 package serverEvents
 
 import (
-	"TicTacToe/gameServer/internal/event"
+	"GridPlay/gameServer/internal/event"
 )
 
 type MediatorEvent struct {

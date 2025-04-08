@@ -1,14 +1,14 @@
 package handlers
 
 import (
-	"TicTacToe/assert"
-	"TicTacToe/game"
-	"TicTacToe/game/winState"
-	"TicTacToe/gameServer/message/serverMsg"
+	"GridPlay/assert"
+	"GridPlay/game"
+	"GridPlay/game/winState"
+	"GridPlay/gameServer/message/serverMsg"
 	"errors"
 	"log/slog"
 
-	"TicTacToe/gameServer/internal/event"
+	"GridPlay/gameServer/internal/event"
 
 	"github.com/google/uuid"
 )

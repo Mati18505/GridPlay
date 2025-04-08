@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"TicTacToe/assert"
-	"TicTacToe/gameServer/internal/event"
+	"GridPlay/assert"
+	"GridPlay/gameServer/internal/event"
 )
 
 type Synchronizer struct {

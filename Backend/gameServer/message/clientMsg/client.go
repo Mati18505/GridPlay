@@ -1,8 +1,8 @@
 package clientMsg
 
 import (
-	"TicTacToe/assert"
-	"TicTacToe/gameServer/message"
+	"GridPlay/assert"
+	"GridPlay/gameServer/message"
 )
 
 type MsgType message.MsgType
