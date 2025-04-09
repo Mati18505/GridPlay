@@ -1,4 +1,4 @@
-package game
+package TicTacToe
 
 import (
 	"GridPlay/assert"
@@ -71,7 +71,7 @@ func TestGameWinChecker(t *testing.T) {
 		moveHistory := list.New()
 		moveHistory.PushFront(move{pos: Pos{2, i}, playerID: 0})
 
-		chkg := Game{
+		chkg := TicTacToe{
 			state: chk,
 			moveHistory: *moveHistory, // only last move
 		}
@@ -88,7 +88,7 @@ func TestGameWinChecker(t *testing.T) {
 		moveHistory := list.New()
 		moveHistory.PushFront(move{pos: Pos{i, 2}, playerID: 0})
 
-		chkg := Game{
+		chkg := TicTacToe{
 			state: chk,
 			moveHistory: *moveHistory,
 		}
@@ -105,7 +105,7 @@ func TestGameWinChecker(t *testing.T) {
 		moveHistory := list.New()
 		moveHistory.PushFront(move{pos: Pos{2, 2}, playerID: 0})
 
-		chkg := Game{
+		chkg := TicTacToe{
 			state: chk,
 			moveHistory: *moveHistory,
 		}
@@ -121,7 +121,7 @@ func TestGameWinChecker(t *testing.T) {
 		moveHistory := list.New()
 		moveHistory.PushFront(move{pos: Pos{2, 0}, playerID: 0})
 
-		chkg := Game{
+		chkg := TicTacToe{
 			state: chk,
 			moveHistory: *moveHistory,
 		}

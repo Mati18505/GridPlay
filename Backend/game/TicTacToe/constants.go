@@ -1,4 +1,4 @@
-package game
+package TicTacToe
 
 import (
 	"GridPlay/assert"

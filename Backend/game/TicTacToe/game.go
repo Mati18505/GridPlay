@@ -1,4 +1,4 @@
-package game
+package TicTacToe
 
 import (
 	"GridPlay/assert"
@@ -26,14 +26,14 @@ type Pos struct {
 	Y int `json:"y"`
 }
 
-type Game struct {
+type TicTacToe struct {
 	players [2]Player
 	state [][]char
 	winState winState.WinState
 	moveHistory list.List
 }
 
-func CreateGame() *Game {
+func CreateGame() *TicTacToe {
 	p1 := Player{
 		char: RandomChar(),
 		id: 0,
@@ -43,7 +43,7 @@ func CreateGame() *Game {
 		id: 1,
 	}
 
-	game := &Game{
+	game := &TicTacToe{
 		players: [2]Player{p1, p2},
 		state: createEmptyState(),
 		winState: winState.Values.None,
@@ -67,7 +67,7 @@ func areEqual[t comparable](v1, v2, v3 t) bool {
 	return v1 == v2 && v2 == v3;
 }
 
-func (game *Game) checkWinnerByLastMove() char {
+func (game *TicTacToe) checkWinnerByLastMove() char {
     var winner char
 
 	state := game.state
@@ -96,11 +96,11 @@ func (game *Game) checkWinnerByLastMove() char {
     return winner
 }
 
-func (game *Game) checkDraw() bool {
+func (game *TicTacToe) checkDraw() bool {
     return game.moveHistory.Len() == int(math.Pow(3.0, 2.0))
 }
 
-func (game *Game) Move(pos Pos) error {
+func (game *TicTacToe) Move(pos Pos) error {
 	if pos.X < 0 || pos.Y < 0 || pos.X > 2 || pos.Y > 2 {
 		assert.Never("position is out of range", "pos", pos)
 	}
@@ -133,7 +133,7 @@ func (game *Game) Move(pos Pos) error {
 	return nil
 }
 
-func (game *Game) check(pos Pos, c char) error {
+func (game *TicTacToe) check(pos Pos, c char) error {
 	if pos.X < 0 || pos.Y < 0 || pos.X > 2 || pos.Y > 2 {
 		assert.Never("position is out of range", "pos", pos)
 	}
@@ -149,7 +149,7 @@ func (game *Game) check(pos Pos, c char) error {
 }
 
 
-func (game *Game) GetWinState() winState.WinState {
+func (game *TicTacToe) GetWinState() winState.WinState {
 	return game.winState
 }
 
@@ -158,7 +158,7 @@ type move struct {
 	playerID int
 }
 
-func (game *Game) GetCurrentRoundPlayer() Player {
+func (game *TicTacToe) GetCurrentRoundPlayer() Player {
 	lastMove, err := game.getLastMove()
 
 	if err != nil {
@@ -168,7 +168,7 @@ func (game *Game) GetCurrentRoundPlayer() Player {
 	return game.players[1 - lastMove.playerID]
 }
 
-func (game *Game) getLastMove() (move, error) {
+func (game *TicTacToe) getLastMove() (move, error) {
 	lastMove := game.moveHistory.Front()
 	
 	if lastMove == nil {
@@ -181,7 +181,7 @@ func (game *Game) getLastMove() (move, error) {
 	return m, nil
 }
 
-func (game *Game) GetPlayerWithId(id int) Player {
+func (game *TicTacToe) GetPlayerWithId(id int) Player {
 	if id < 0 || id > 1 {
 		assert.Never("player id must be 0 or 1", "player id", id)
 	}
