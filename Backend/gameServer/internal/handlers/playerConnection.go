@@ -122,3 +122,7 @@ func (pConn *PlayerConnection) sendToServerHandler(e event.Event) {
 
 	pConn.serverHandler.Handle(e)
 }
+
+func (pConn *PlayerConnection) GetUUID() uuid.UUID {
+	return pConn.uuid
+}

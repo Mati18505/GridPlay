@@ -3,6 +3,7 @@ package serverData
 import (
 	"GridPlay/assert"
 	"GridPlay/gameServer/internal/handlers"
+	"GridPlay/gameServer/internal/handlers/room"
 	"errors"
 	"sync"
 
@@ -11,18 +12,18 @@ import (
 
 type ServerData struct {
 	connections map[uuid.UUID]*handlers.PlayerConnection
-	rooms       map[uuid.UUID]*handlers.Room
+	rooms       map[uuid.UUID]*room.Room
 	mut sync.Mutex
 }
 
 func CreateServerData() *ServerData {
 	 return &ServerData{
 		connections: make(map[uuid.UUID]*handlers.PlayerConnection),
-		rooms: make(map[uuid.UUID]*handlers.Room),
+		rooms: make(map[uuid.UUID]*room.Room),
 	 }
 }
 
-func (srvData *ServerData) AddRoom(room *handlers.Room) {
+func (srvData *ServerData) AddRoom(room *room.Room) {
 	assert.NotNil(room, "room was nil")
 
 	srvData.mut.Lock()
@@ -38,7 +39,7 @@ func (srvData *ServerData) RemoveRoom(roomUUID uuid.UUID) {
 	delete(srvData.rooms, roomUUID)
 }
 
-func (srvData *ServerData) GetRoom(roomUUID uuid.UUID) (*handlers.Room, error) {
+func (srvData *ServerData) GetRoom(roomUUID uuid.UUID) (*room.Room, error) {
 	srvData.mut.Lock()
 	defer srvData.mut.Unlock()
 
@@ -51,7 +52,7 @@ func (srvData *ServerData) GetRoom(roomUUID uuid.UUID) (*handlers.Room, error) {
 	return room, nil
 }
 
-func (srvData *ServerData) ForEachRoom(f func (room *handlers.Room)) {
+func (srvData *ServerData) ForEachRoom(f func (room *room.Room)) {
 	srvData.mut.Lock()
 	defer srvData.mut.Unlock()
 

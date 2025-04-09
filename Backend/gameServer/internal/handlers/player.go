@@ -67,3 +67,11 @@ func (player *Player) sendToNextHandler(e event.Event) {
 
 	player.nextHandler.Handle(e)
 }
+
+func (player *Player) GetConnectionId() uuid.UUID {
+	return player.connectionID
+}
+
+func (player *Player) GetPlayerId() int {
+	return player.playerID
+}

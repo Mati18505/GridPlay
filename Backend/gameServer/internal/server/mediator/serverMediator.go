@@ -5,6 +5,7 @@ import (
 	"GridPlay/gameServer/internal/connection"
 	"GridPlay/gameServer/internal/event"
 	"GridPlay/gameServer/internal/handlers"
+	"GridPlay/gameServer/internal/handlers/room"
 	"GridPlay/gameServer/internal/server/matchmaker"
 	"GridPlay/gameServer/internal/server/serverData"
 	"GridPlay/gameServer/internal/server/serverEvents"
@@ -134,11 +135,11 @@ func (mediator *ServerMediator) FromMatchmaker(e event.Event) bool {
 	return true
 }
 
-func (mediator *ServerMediator) CreateRoom(pConnections [2]*handlers.PlayerConnection) *handlers.Room {
+func (mediator *ServerMediator) CreateRoom(pConnections [2]*handlers.PlayerConnection) *room.Room {
 	assert.NotNil(mediator.handler, "server handler was nil")
 
 	uuid := mediator.GenerateUUID()
-	room := handlers.CreateRoom(mediator.handler.GetSync(), pConnections, uuid)
+	room := room.CreateRoom(mediator.handler.GetSync(), pConnections, uuid)
 
 	slog.Info("created room", "uuid", uuid.String())
 
@@ -235,7 +236,7 @@ func (mediator *ServerMediator) Update() {
 func (mediator *ServerMediator) updateAllRooms() {
 	assert.NotNil(mediator.serverData, "server data was nil")
 
-	mediator.serverData.ForEachRoom(func(room *handlers.Room) {
+	mediator.serverData.ForEachRoom(func(room *room.Room) {
 		room.Update()
 	})
 }
