@@ -73,7 +73,7 @@ func (pConn *PlayerConnection) Handle(e event.Event) {
 	} else {
 		slog.Info("cannot do this while game is not running")
 
-		message := serverMsg.MakeMessage(serverMsg.TNotAllowedErr, &serverMsg.NotAllowedErrMessage{
+		message := serverMsg.MakeMessage(serverMsg.TNotAllowedErr, &serverMsg.NotAllowedErr{
 			Reason: "cannot do this while game is not running",
 		})
 

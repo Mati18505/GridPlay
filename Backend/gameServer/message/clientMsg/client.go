@@ -7,18 +7,17 @@ import (
 
 type MsgType message.MsgType
 const (
-	TMove MsgType = iota
+	TGameMessage MsgType = iota
 )
 
-type MoveMessage struct {
-	X int `json:"x"`
-	Y int `json:"y"`
+type GameMessage struct {
+	Data any `json:"data"`
 }
 
 func (msgT MsgType) String() string { 
 	switch msgT {
-	case TMove:
-		return "move"
+	case TGameMessage:
+		return "game_message"
 	default:
 		assert.Never("unknown type of client message", "client message", msgT)
 		return "unknown"

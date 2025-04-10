@@ -8,47 +8,46 @@ import (
 
 type MsgType message.MsgType
 const (
-	TMatchStarted MsgType = iota
-	TMoveAns
-	TOpponentMove
-	TWinEvent
+	TGameStarted MsgType = iota
+	TGameEnded
+	TGameMessage
+	TApprove
 	TNotAllowedErr
 )
 
-type MatchStarted struct {
+type GameStarted struct {
 	Char rune `json:"char"`
 	OpponentChar rune `json:"opponentChar"`
 }
 
-type MoveRes struct {
-	Approved        bool   `json:"approved"`
-	Reason string `json:"reason"`
-}
-
-type MoveMessage struct {
-	X int `json:"x"`
-	Y int `json:"y"`
-}
-
-type WinMessage struct {
+type GameEnded struct {
 	Status string `json:"status"`
 	Cause string `json:"cause"`
 }
 
-type NotAllowedErrMessage struct {
+type GameMessage struct {
+	Data any `json:"data"`
+}
+
+type Approve struct {
+	Approved bool   `json:"approved"`
+	Reason string `json:"reason"`
+}
+
+type NotAllowedErr struct {
 	Reason string `json:"reason"`
 }
 
 func (msgT MsgType) String() string { 
 	switch msgT {
-	case TMatchStarted:
-		return "match_started"
-	case TMoveAns:
-		return "move_answer"
-	case TOpponentMove:
-		return "opponent_move"
-	case TWinEvent:
-		return "win_event"
+	case TGameStarted:
+		return "game_started"
+	case TGameEnded:
+		return "game_ended"
+	case TGameMessage:
+		return "game_message"
+	case TApprove:
+		return "approve"
 	case TNotAllowedErr:
 		return "not_allowed_error"
 	default:
@@ -63,6 +62,6 @@ func MakeMessage[T any](msgType MsgType, msgData T) message.Message {
 	return msg
 }
 
-func (msg MatchStarted) String() string {
+func (msg GameStarted) String() string {
 	return fmt.Sprintf("Char: %s OpponentChar: %s", string(msg.Char), string(msg.OpponentChar))
 }
