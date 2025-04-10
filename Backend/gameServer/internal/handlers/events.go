@@ -19,9 +19,8 @@ type EventRemoveRoom struct {
 	RoomUUID uuid.UUID
 }
 
-type EventMove struct {
-	X int
-	Y int
+type EventGameMessage struct {
+	Data any
 	Player *Player
 }
 
@@ -36,8 +35,8 @@ func (eType EventDisconnect) GetType() event.EventType {
 func (eType EventRemoveRoom) GetType() event.EventType {
 	return event.EventTypeRemoveRoom;
 }
-func (eType EventMove) GetType() event.EventType {
-	return event.EventTypeMove;
+func (eType EventGameMessage) GetType() event.EventType {
+	return event.EventTypeGameMessage;
 }
 func (eType EventSendMessage) GetType() event.EventType {
 	return event.EventTypeSendMessage;
@@ -47,15 +46,14 @@ func EventFromClientMessage(msg message.Message) (event.Event, error) {
 	assert.NotNil(msg, "message was nil")
 
 	switch clientMsg.MsgType(msg.Type) {
-	case clientMsg.TMove:
-		moveMsg, err := message.GetConcreteMessage[clientMsg.MoveMessage](msg)
+	case clientMsg.TGameMessage:
+		gameMsg, err := message.GetConcreteMessage[clientMsg.GameMessage](msg)
 		if err != nil {
 			return nil, err
 		}
 
-		return EventMove{
-			X: moveMsg.X,
-			Y: moveMsg.Y,
+		return EventGameMessage{
+			Data: gameMsg.Data,
 		}, nil
 
 	default:

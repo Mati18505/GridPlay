@@ -17,7 +17,7 @@ const (
 	EventTypeNone EventType = iota
 	EventTypeDisconnect
 	EventTypeRemoveRoom
-	EventTypeMove
+	EventTypeGameMessage
 	EventTypeSendMessage
 	// server
 	EventTypePlayersMatched
@@ -31,8 +31,8 @@ func (eType EventType) String() string {
 		return "Disconnect"
 	case EventTypeRemoveRoom:
 		return "RemoveRoom"
-	case EventTypeMove:
-		return "Move"
+	case EventTypeGameMessage:
+		return "GameMessage"
 	case EventTypeSendMessage:
 		return "SendMessage"
 	case EventTypePlayersMatched:
