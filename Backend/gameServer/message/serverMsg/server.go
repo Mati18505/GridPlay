@@ -3,22 +3,15 @@ package serverMsg
 import (
 	"GridPlay/assert"
 	"GridPlay/gameServer/message"
-	"fmt"
 )
 
 type MsgType message.MsgType
 const (
-	TGameStarted MsgType = iota
-	TGameEnded
+	TGameEnded MsgType = iota
 	TGameMessage
 	TApprove
 	TNotAllowedErr
 )
-
-type GameStarted struct {
-	Char rune `json:"char"`
-	OpponentChar rune `json:"opponentChar"`
-}
 
 type GameEnded struct {
 	Status string `json:"status"`
@@ -40,8 +33,6 @@ type NotAllowedErr struct {
 
 func (msgT MsgType) String() string { 
 	switch msgT {
-	case TGameStarted:
-		return "game_started"
 	case TGameEnded:
 		return "game_ended"
 	case TGameMessage:
@@ -60,8 +51,4 @@ func MakeMessage[T any](msgType MsgType, msgData T) message.Message {
 	msg := message.MakeMessage(message.MsgType(msgType), msgData)
 
 	return msg
-}
-
-func (msg GameStarted) String() string {
-	return fmt.Sprintf("Char: %s OpponentChar: %s", string(msg.Char), string(msg.OpponentChar))
 }

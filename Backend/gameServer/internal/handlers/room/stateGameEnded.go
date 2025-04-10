@@ -3,7 +3,7 @@ package room
 import (
 	"GridPlay/assert"
 	"GridPlay/gameServer/internal/handlers"
-	"errors"
+	"GridPlay/gameServer/message/serverMsg"
 )
 
 type gameEnded struct {
@@ -30,6 +30,21 @@ func (state *gameEnded) handleDisconnect(playerId, opponentId int) {
 	room.sendToNextHandler(eRemoveRoom)
 }
 
-func (state *gameEnded) handleMove(eMove handlers.EventMove) {
-	state.room.eMoveSendErrorResponse(errors.New("cannot move because game has ended"), eMove.Player)
+func (state *gameEnded) handleGameMsg(eGameMsg handlers.EventGameMessage) error {
+	assert.NotNil(state.room, "room was nil")
+	room := state.room
+
+	approveMsg := serverMsg.MakeMessage(serverMsg.TApprove, &serverMsg.Approve{
+		Approved: false,
+		Reason: "cannot handle game_message because game has ended",
+	})
+
+	eApprove := handlers.EventSendMessage{
+		ConnectionId: eGameMsg.Player.GetConnectionId(),
+		Msg: approveMsg,
+	}
+
+	room.sendToNextHandler(eApprove)
+
+	return nil
 }

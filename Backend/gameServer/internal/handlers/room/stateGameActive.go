@@ -3,6 +3,7 @@ package room
 import (
 	"GridPlay/assert"
 	"GridPlay/game/winState"
+	"GridPlay/gameServer/externalEvent"
 	"GridPlay/gameServer/internal/handlers"
 )
 
@@ -14,12 +15,25 @@ type gameActive struct {
 func createGameActive(room *Room) *gameActive {
 	assert.NotNil(room, "room was nil")
 
-	room.sendMatchStartedMessage(room.players[0])
-	room.sendMatchStartedMessage(room.players[1])
-
-	return &gameActive{
+	state := &gameActive{
 		room: room,
 	};
+
+	state.sendGameStartMsgs()
+
+	return state
+}
+
+func (state *gameActive) sendGameStartMsgs() {
+	assert.NotNil(state.room, "room was nil")
+	room := state.room
+
+	gameStartAns := room.game.GetGameStartMessage()
+
+	for i := 0; i < 2; i++ {
+		eGameStart := state.createGameMsgFromGameAns(room.players[0], gameStartAns)
+		room.sendGameAnswer(eGameStart.Player, eGameStart)
+	}
 }
 
 func (state *gameActive) handleDisconnect(playerId, opponentId int) {
@@ -42,34 +56,57 @@ func (state *gameActive) handleDisconnect(playerId, opponentId int) {
 	room.setState(createGameEnded(room))
 }
 
-func (state *gameActive) handleMove(eMove handlers.EventMove) {
+func (state *gameActive) handleGameMsg(eGameMsg handlers.EventGameMessage) error {
 	assert.NotNil(state.room, "room was nil")
 	room := state.room
 
-	err := room.eMovePlayer(eMove)
-
-	if err != nil {
-		room.eMoveSendErrorResponse(err, eMove.Player)
-		return
+	externalGameMsg := externalEvent.EventGameMessage{
+		Data: eGameMsg.Data,
+		PId: eGameMsg.Player.GetPlayerId(),
 	}
 
-	room.eMoveSendSuccessResponse(eMove.Player)
+	gameAnswers, err := room.game.HandleGameMsg(externalGameMsg)
 
-	opponent := state.GetOpponent(eMove.Player.GetPlayerId())
-	room.eMoveSendMessageToOpponent(eMove, opponent)
+	if err != nil {
+		return err
+	}
 
-	state.checkGameWin(eMove)
+	for _, gameAnswer := range gameAnswers {
+		eGameMsg := state.createGameMsgFromGameAns(eGameMsg.Player, gameAnswer)
+		room.sendGameAnswer(eGameMsg.Player, eGameMsg)
+	}
+
+	state.checkGameWin(eGameMsg)
+
+	return nil
 }
 
-func (state *gameActive) checkGameWin(eMove handlers.EventMove) {
+func (state *gameActive) createGameMsgFromGameAns(player *handlers.Player, gameAnswer externalEvent.EventGameMessage) handlers.EventGameMessage {
+	assert.NotNil(player, "player was nil")
+
+	var receiver *handlers.Player
+
+	if gameAnswer.PId == player.GetPlayerId() {
+		receiver = player
+	} else {
+		receiver = state.GetOpponent(player.GetPlayerId())
+	}
+
+	return handlers.EventGameMessage{
+		Data: gameAnswer.Data,
+		Player: receiver,
+	}
+}
+
+func (state *gameActive) checkGameWin(eGameMsg handlers.EventGameMessage) {
 	assert.NotNil(state.room, "room was nil")
 	room := state.room
 
 	assert.NotNil(room.game, "game was nil")
-	assert.NotNil(eMove.Player, "event move player was nil")
+	assert.NotNil(eGameMsg.Player, "event move player was nil")
 
 	wState := room.game.GetWinState()
-	player := eMove.Player
+	player := eGameMsg.Player
 	opponent := state.GetOpponent(player.GetPlayerId())
 	
 	if wState == winState.Values.Win {

@@ -35,11 +35,11 @@ func (player *Player) Handle(e event.Event) {
 	slog.Debug("event in player", "Type", eType, "event", e)
 
 	switch eType {
-	case event.EventTypeMove:
-		eMove, ok := e.(EventMove)
+	case event.EventTypeGameMessage:
+		eGameMsg, ok := e.(EventGameMessage)
 		assert.Assert(ok, "type assertion failed for event move")
 
-		player.handleMove(eMove)
+		player.handleGameMsg(eGameMsg)
 
 	case event.EventTypeDisconnect:
 		eDisconnect, ok := e.(EventDisconnect)
@@ -52,9 +52,9 @@ func (player *Player) Handle(e event.Event) {
 	}
 }
 
-func (player *Player) handleMove(eMove EventMove) {
-	eMove.Player = player
-	player.sendToNextHandler(eMove)
+func (player *Player) handleGameMsg(eGameMsg EventGameMessage) {
+	eGameMsg.Player = player
+	player.sendToNextHandler(eGameMsg)
 }
 
 func (player *Player) handleDisconnect(eDisconnect EventDisconnect) {

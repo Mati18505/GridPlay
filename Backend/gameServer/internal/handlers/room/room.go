@@ -5,7 +5,6 @@ import (
 	"GridPlay/game"
 	"GridPlay/game/winState"
 	"GridPlay/gameServer/message/serverMsg"
-	"errors"
 	"log/slog"
 
 	"GridPlay/gameServer/internal/event"
@@ -18,7 +17,7 @@ type Room struct {
 	nextHandler handlers.Handler
 	uuid uuid.UUID
 	sync *handlers.Synchronizer
-	game        *game.Game
+	game        game.Game
 	players [2]*handlers.Player
 	state state
 }
@@ -78,30 +77,11 @@ func (room *Room) createPlayer(pConn *handlers.PlayerConnection, playerId int) *
 	return player
 }
 
-func (room *Room) createGame() *game.Game {
+func (room *Room) createGame() game.Game {
 	game := game.CreateGame()
 	assert.NotNil(game, "game was nil")
 
 	return game
-}
-
-func (room *Room) sendMatchStartedMessage(player *handlers.Player) {
-	assert.NotNil(player, "player was nil")
-	assert.NotNil(room.game, "game was nil")
-
-	gamePlayer := room.game.GetPlayerWithId(player.GetPlayerId())
-	playerChar := gamePlayer.GetChar()
-	opponentChar := game.OpponentChar(playerChar)
-
-	matchStartMsg := serverMsg.MakeMessage(serverMsg.TGameStarted, &serverMsg.GameStarted{
-		Char: playerChar.GetRune(),
-		OpponentChar: opponentChar.GetRune(),
-	})
-
-	room.sendToNextHandler(handlers.EventSendMessage{
-		ConnectionId: player.GetConnectionId(),
-		Msg: matchStartMsg,
-	})
 }
 
 func (room *Room) Update() {
@@ -116,11 +96,11 @@ func (room *Room) Handle(e event.Event) {
 	slog.Debug("event in room", "Type", eType, "event", e)
 
 	switch eType {
-	case event.EventTypeMove:
-		eMove, ok := e.(handlers.EventMove)
+	case event.EventTypeGameMessage:
+		eGameMsg, ok := e.(handlers.EventGameMessage)
 		assert.Assert(ok, "type assertion failed for event move")
 
-		room.handleMove(eMove)
+		room.handleGameMsg(eGameMsg)
 
 	case event.EventTypeDisconnect:
 		eDisconnect, ok := e.(handlers.EventDisconnect)
@@ -145,71 +125,25 @@ func (room *Room) handleDisconnect(eDisconnect handlers.EventDisconnect) {
 	room.state.handleDisconnect(playerId, opponentId)
 }
 
-func (room *Room) handleMove(eMove handlers.EventMove) {
-	assert.NotNil(eMove.Player, "event move player was nil")
+func (room *Room) handleGameMsg(eGameMsg handlers.EventGameMessage) {
+	assert.NotNil(eGameMsg.Player, "event move player was nil")
 
-	room.state.handleMove(eMove)
-}
-
-func (room *Room) eMovePlayer(eMove handlers.EventMove) error {
-	assert.NotNil(room.game, "game was nil")
-	assert.NotNil(eMove.Player, "event move player was nil")
-
-	var err error
-	currPlayer := room.game.GetCurrentRoundPlayer()
-	gamePlayer := room.game.GetPlayerWithId(eMove.Player.GetPlayerId())
-
-	if currPlayer == gamePlayer {
-		err = room.game.Move(game.Pos{X: eMove.X, Y: eMove.Y})
-	} else {
-		err = errors.New("not your round, dummy")
+	err := room.state.handleGameMsg(eGameMsg)
+	if err != nil {
+		slog.Error("Cannot handle game message", "err", err.Error())
 	}
-
-	return err
 }
 
-func (room *Room) eMoveSendErrorResponse(err error, player *handlers.Player) {
-	assert.NotNil(player, "player was nil")
-	assert.NotNil(err, "error was nil")
-
-	slog.Info("cannot handle move for", "player uuid", player.GetConnectionId().String(), "player game id", player.GetPlayerId(), "err", err)
-
-	msg := serverMsg.MakeMessage(serverMsg.TApprove, serverMsg.Approve{
-		Approved: false,
-		Reason: err.Error(),
-	})
-
-	room.sendToNextHandler(handlers.EventSendMessage{
-		ConnectionId: player.GetConnectionId(),
-		Msg: msg,
-	})
-}
-
-func (room *Room) eMoveSendSuccessResponse(player *handlers.Player) {
+func (room *Room) sendGameAnswer(player *handlers.Player, eGameMsg handlers.EventGameMessage) {
 	assert.NotNil(player, "player was nil")
 
 	msg := serverMsg.MakeMessage(serverMsg.TApprove, serverMsg.Approve{
 		Approved: true,
 	})
-	
 
 	room.sendToNextHandler(handlers.EventSendMessage{
 		ConnectionId: player.GetConnectionId(),
 		Msg: msg,
-	})
-}
-
-func (room *Room) eMoveSendMessageToOpponent(eMove handlers.EventMove, opponent *handlers.Player) {
-	assert.NotNil(opponent, "opponent was nil")
-
-	msgForOpponent := serverMsg.MakeMessage(serverMsg.TOpponentMove, &serverMsg.MoveMessage{
-		X: eMove.X,
-		Y: eMove.Y,
-	})
-
-	room.sendToNextHandler(handlers.EventSendMessage{
-		ConnectionId: opponent.GetConnectionId(),
-		Msg: msgForOpponent,
 	})
 }
 
