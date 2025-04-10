@@ -1,11 +1,14 @@
 package game
 
+import (
+	"GridPlay/gameServer/externalEvent"
+)
+
 type MoveParam = string
 
 type Game interface {
-	ValidateMove(Player, MoveParam) error
-	Move(MoveParam) error
 	GetWinState() WinState 
+	HandleGameMsg(eGameMsg externalEvent.EventGameMessage) []externalEvent.EventGameMessage
 }
 
 type Player interface {
