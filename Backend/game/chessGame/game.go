@@ -3,6 +3,9 @@ package chessGame
 import (
 	"GridPlay/assert"
 	"GridPlay/game"
+	"GridPlay/gameServer/externalEvent"
+	"bytes"
+	"encoding/json"
 	"errors"
 	"slices"
 
@@ -38,6 +41,32 @@ func CreateChessGame() *ChessGame {
 		chess: chess.NewGame(),
 		players: players,
 	}
+}
+
+type msgGameStart struct {
+	color string
+}
+
+func (chessGame *ChessGame) GetGameStartMessage(playerId int) externalEvent.EventGameMessage {
+	var data msgGameStart
+
+	if playerId == 0 {
+		data = msgGameStart{
+			color: "white",
+		}
+	} else {
+		data = msgGameStart{
+			color: "black",
+		}
+	}
+
+	return externalEvent.EventGameMessage{Data: data}
+}
+
+func (chessGame *ChessGame) HandleGameMsg(msg externalEvent.EventGameMessage) ([]externalEvent.EventGameMessage, error) {
+	return []externalEvent.EventGameMessage{
+		{},
+	}, nil
 }
 
 func (chessGame *ChessGame) ValidateMove(p Player, m game.MoveParam) error {
@@ -93,4 +122,12 @@ func (chessGame *ChessGame) decodeMoveParam(m game.MoveParam) (*chess.Move, erro
 	}
 
 	return move, nil
+}
+
+func (chessgame *ChessGame) encodeToJsonString(el any) string {
+		var buff bytes.Buffer
+		encoder := json.NewEncoder(&buff)
+
+		encoder.Encode(el)
+		return buff.String()
 }
