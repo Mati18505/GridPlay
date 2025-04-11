@@ -7,7 +7,7 @@ import (
 type MoveParam = string
 
 type Game interface {
-	GetGameStartMessage() externalEvent.EventGameMessage
+	GetGameStartMessage(playerId int) externalEvent.EventGameMessage
 	GetWinState() WinState 
 	HandleGameMsg(eGameMsg externalEvent.EventGameMessage) ([]externalEvent.EventGameMessage, error)
 }
