@@ -29,7 +29,7 @@ func (state *gameActive) sendGameStartMsgs() {
 
 	for i := 0; i < 2; i++ {
 		gameStartAns := room.game.GetGameStartMessage(i)
-		eGameStart := state.createGameMsgFromGameAns(room.players[0], gameStartAns)
+		eGameStart := state.createGameMsgFromGameAns(room.players[i], gameStartAns)
 		room.sendGameAnswer(eGameStart.Player, eGameStart)
 	}
 }
