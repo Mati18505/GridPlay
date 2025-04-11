@@ -2,7 +2,7 @@ package room
 
 import (
 	"GridPlay/assert"
-	"GridPlay/game/winState"
+	"GridPlay/game"
 	"GridPlay/gameServer/externalEvent"
 	"GridPlay/gameServer/internal/handlers"
 )
@@ -108,9 +108,9 @@ func (state *gameActive) checkGameWin(eGameMsg handlers.EventGameMessage) {
 	player := eGameMsg.Player
 	opponent := state.GetOpponent(player.GetPlayerId())
 	
-	if wState == winState.Values.Win {
+	if wState.T == game.Win {
 		room.gameEndWinHandler(player.GetConnectionId(), opponent.GetConnectionId())
-	} else if wState == winState.Values.Draw {
+	} else if wState.T == game.Draw {
 		room.gameEndDrawHandler(player.GetConnectionId(), opponent.GetConnectionId())
 	}
 }

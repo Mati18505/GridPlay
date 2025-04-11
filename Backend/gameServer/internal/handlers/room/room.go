@@ -4,7 +4,6 @@ import (
 	"GridPlay/assert"
 	"GridPlay/game"
 	"GridPlay/game/chessGame"
-	"GridPlay/game/winState"
 	"GridPlay/gameServer/message/serverMsg"
 	"log/slog"
 
@@ -232,5 +231,5 @@ func (room *Room) sendToNextHandler(e event.Event) {
 func (room *Room) gameHasEnded() bool {
 	assert.NotNil(room.game, "game was nil")
 
-	return room.game.GetWinState() != winState.Values.None
+	return room.game.GetWinState().T != game.None
 }
