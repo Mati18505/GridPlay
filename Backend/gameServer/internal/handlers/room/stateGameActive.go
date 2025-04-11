@@ -30,7 +30,7 @@ func (state *gameActive) sendGameStartMsgs() {
 	for i := range 2 {
 		gameStartAns := room.game.GetGameStartMessage(i)
 		eGameStart := state.createGameMsgFromGameAns(room.players[i], gameStartAns)
-		room.sendGameAnswer(eGameStart.Player, eGameStart)
+		room.sendGameAnswer(eGameStart)
 	}
 }
 
@@ -71,7 +71,7 @@ func (state *gameActive) handleGameMsg(eGameMsg handlers.EventGameMessage) error
 
 	for _, gameAnswer := range gameAnswers {
 		eGameMsg := state.createGameMsgFromGameAns(eGameMsg.Player, gameAnswer)
-		room.sendGameAnswer(eGameMsg.Player, eGameMsg)
+		room.sendGameAnswer(eGameMsg)
 	}
 
 	state.checkGameWin(eGameMsg)
