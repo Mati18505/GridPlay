@@ -27,7 +27,7 @@ func (state *gameActive) sendGameStartMsgs() {
 	assert.NotNil(state.room, "room was nil")
 	room := state.room
 
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		gameStartAns := room.game.GetGameStartMessage(i)
 		eGameStart := state.createGameMsgFromGameAns(room.players[i], gameStartAns)
 		room.sendGameAnswer(eGameStart.Player, eGameStart)
