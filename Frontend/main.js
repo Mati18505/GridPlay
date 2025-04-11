@@ -16,20 +16,21 @@ socket.onclose = function(event) {
 };
 
 // From server
-const MatchStarted = 0
-const MoveAns = 1
-const OpponentMove = 2
-const WinEvent = 3
+const GameEnded = 0
+const GameMessageFromServer = 1
+const Approve = 2
+const NotAllowedErr = 3
 
 // From client
-const Move = 0
+const GameMessageToServer = 0
 
 var lastMovePos;
 var char;
 var opponentChar;
 
 // Events
-const eventMove = new Event("move");
+const eventApprove = new Event("approve");
+const eventNotAllowed = new Event("not-allowed");
 
 socket.onmessage = function(messageJson) {
     const message = JSON.parse(messageJson.data);
@@ -37,45 +38,44 @@ socket.onmessage = function(messageJson) {
 
     console.log(message.type);
     switch (message.type) {
-        case MoveAns:
+        case GameEnded:
+            console.log("Game end: ", messageData.status, messageData.cause);
+
+            const eventGameEnd = new CustomEvent("game-end", {
+                detail: {
+                    status: messageData.status,
+                    cause: messageData.cause
+                }
+            });
+            document.dispatchEvent(eventGameEnd);
+            break;
+
+        case GameMessageFromServer:
+            console.log("Match started");
+
+            const eventGameMsg = new CustomEvent("game-msg", {
+                detail: {
+                    data: messageData.data
+                }
+            });
+            document.dispatchEvent(eventGameMsg);
+            break;
+
+        case Approve:
             if(messageData.approved) {
-                console.log("Move approved");
-                document.dispatchEvent(eventMove);
+                console.log(`Last action approved: ${messageData.reason}`);
+
+                document.dispatchEvent(eventApprove);
             } else {
                 console.log(`Move rejected reason: ${messageData.reason}`)
             }
             
             break;
-        case MatchStarted:
-            console.log("Match started");
-            const eventMatchStarted = new CustomEvent("eventMatchStarted", {
-                detail: {
-                    char: String.fromCharCode(messageData.char),
-                    opponentChar: String.fromCharCode(messageData.opponentChar),
-                }
-            });
-            document.dispatchEvent(eventMatchStarted);
-            
-            break;
-        case WinEvent:
-            console.log("Game end: ", messageData.status, messageData.cause);
 
-            const eventWin = new CustomEvent("eventWin", {
-                detail: {
-                    status: messageData.status,
-                }
-            });
-            document.dispatchEvent(eventWin);
-            break;
-        case OpponentMove:
-            console.log("Opponent move: ", messageData.x, messageData.y);
+        case NotAllowedErr:
+            console.log("Last action not allowed: " + messageData.reason)
 
-            const eventOpponentMove = new CustomEvent("opponentMove", {
-                detail: {
-                    pos: new Pos(messageData.x, messageData.y),
-                }
-            });
-            document.dispatchEvent(eventOpponentMove);
+            document.dispatchEvent(eventNotAllowed)
             break;
     }
     /*} catch {
@@ -140,6 +140,24 @@ document.addEventListener("eventWin", e => {
     console.log(status);
     GetStatusEl().innerHTML = status;
     gameEnded = true;
+});
+
+document.addEventListener("game-ended", e => {
+    console.log("game ended")
+    console.log(`status: ${e.detail.status}, cause: ${e.detail.cause}`)
+});
+
+document.addEventListener("game-msg", e => {
+    console.log("game message")
+    console.log(`data: ${e.detail.data}`)
+});
+
+document.addEventListener("approve", e => {
+    console.log("approve")
+});
+
+document.addEventListener("not-allowed", e => {
+    console.log("not allowed")
 });
 
 function GetStatusEl() {
