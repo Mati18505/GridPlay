@@ -137,8 +137,8 @@ func (room *Room) handleGameMsg(eGameMsg handlers.EventGameMessage) {
 func (room *Room) sendGameAnswer(player *handlers.Player, eGameMsg handlers.EventGameMessage) {
 	assert.NotNil(player, "player was nil")
 
-	msg := serverMsg.MakeMessage(serverMsg.TApprove, serverMsg.Approve{
-		Approved: true,
+	msg := serverMsg.MakeMessage(serverMsg.TGameMessage, serverMsg.GameMessage{
+		Data: eGameMsg.Data,
 	})
 
 	room.sendToNextHandler(handlers.EventSendMessage{
