@@ -8,7 +8,6 @@ import (
 )
 
 type gameActive struct {
-	state
 	room *Room
 }
 
