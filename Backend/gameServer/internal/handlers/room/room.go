@@ -3,6 +3,7 @@ package room
 import (
 	"GridPlay/assert"
 	"GridPlay/game"
+	"GridPlay/game/chessGame"
 	"GridPlay/game/winState"
 	"GridPlay/gameServer/message/serverMsg"
 	"log/slog"
@@ -78,7 +79,7 @@ func (room *Room) createPlayer(pConn *handlers.PlayerConnection, playerId int) *
 }
 
 func (room *Room) createGame() game.Game {
-	game := game.CreateGame()
+	game := chessGame.CreateChessGame()
 	assert.NotNil(game, "game was nil")
 
 	return game
