@@ -102,9 +102,9 @@ func TestGetWinState_Draw(t *testing.T) {
 	// Simulate a draw scenario (e.g., stalemate)
 	fenStr := "k1K5/8/8/8/8/8/8/1Q6 w - - 0 1"
 	fen, _ := chess.FEN(fenStr)
-	game := chess.NewGame(fen)
-	game.MoveStr("Qb6")
-	game.Method()
+	chessGame.chess = chess.NewGame(fen)
+	chessGame.chess.MoveStr("Qb6")
+	chessGame.chess.Method()
 
 	winState := chessGame.GetWinState()
 	assert.Equal(t, game.Draw, winState.T, "Expected a draw")
