@@ -109,3 +109,13 @@ func TestGetWinState_Draw(t *testing.T) {
 	winState := chessGame.GetWinState()
 	assert.Equal(t, game.Draw, winState.T, "Expected a draw")
 }
+
+func TestGetGameStartMessage(t *testing.T) {
+	chessGame := CreateChessGame()
+
+	msg := chessGame.GetGameStartMessage(0)
+	assert.Equal(t, "white", msg.Data.(msgGameStart).color, "Expected color to be white for player 0")
+
+	msg = chessGame.GetGameStartMessage(1)
+	assert.Equal(t, "black", msg.Data.(msgGameStart).color, "Expected color to be black for player 1")
+}
