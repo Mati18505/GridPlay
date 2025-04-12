@@ -19,7 +19,7 @@ type GameEnded struct {
 }
 
 type GameMessage struct {
-	Name any `json:"data"`
+	Name any `json:"name"`
 	Data any `json:"data"`
 }
 
