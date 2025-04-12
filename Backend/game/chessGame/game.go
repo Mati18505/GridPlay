@@ -44,7 +44,7 @@ func CreateChessGame() *ChessGame {
 }
 
 type msgGameStart struct {
-	color string
+	Color string `json:"color"`
 }
 
 func (chessGame *ChessGame) GetGameStartMessage(playerId int) externalEvent.EventGameMessage {
@@ -52,11 +52,11 @@ func (chessGame *ChessGame) GetGameStartMessage(playerId int) externalEvent.Even
 
 	if playerId == 0 {
 		data = msgGameStart{
-			color: "white",
+			Color: "white",
 		}
 	} else {
 		data = msgGameStart{
-			color: "black",
+			Color: "black",
 		}
 	}
 
