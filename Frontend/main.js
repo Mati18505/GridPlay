@@ -39,8 +39,6 @@ socket.onmessage = function(messageJson) {
     const message = JSON.parse(messageJson.data);
     const messageData = message.data;
 
-    console.log(message.type);
-
     switch (message.type) {
         case ServerMessages.gameEnded:
             console.log("Game end: ", messageData.status, messageData.cause);
@@ -55,12 +53,10 @@ socket.onmessage = function(messageJson) {
             break;
 
         case ServerMessages.GameMessageFromServer:
-            console.log("Match started");
+            console.log("Game message");
 
             const eventGameMsg = new CustomEvent("game-msg", {
-                detail: {
-                    data: messageData
-                }
+                detail: messageData,
             });
             document.dispatchEvent(eventGameMsg);
             break;
@@ -152,8 +148,14 @@ document.addEventListener("game-ended", e => {
 });
 
 document.addEventListener("game-msg", e => {
-    console.log("game message")
-    console.log(`data: ${e.detail.data}`)
+    let gameMsg = e.detail
+    console.log(`name: ${gameMsg.name}`)
+
+    switch (gameMsg.name) {
+        case "game_start":
+            console.log(`color: ${e.detail.data.color}`)
+            break;
+    }
 });
 
 document.addEventListener("approve", e => {
