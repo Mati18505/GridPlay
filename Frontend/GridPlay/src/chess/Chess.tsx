@@ -8,11 +8,17 @@ import { GameMsg } from '../connection/connection';
 
 function Chess() {
   const [state, setState] = useState("start")
+  const [orientation, setOrientation] = useState<"white" | "black">("white");
   const serverConnection = useRef(ServerConnection.Instance)
 
   useEffect(() => {
       serverConnection.current.onGameMsg = function (this: ServerConnection, ev: GameMsg) {
         console.log(ev.name);
+        switch (ev.name) {
+          case "game_start":
+            setOrientation(ev.data === "white" ? "white" : "black")
+            break;
+        }
       }
 
     return () => {
@@ -40,7 +46,7 @@ function Chess() {
   }
 
   return (
-    <Chessboard position={state} onPieceDrop={onDrop}></Chessboard>
+    <Chessboard position={state} onPieceDrop={onDrop} boardOrientation={orientation}></Chessboard>
   )
 }
 
