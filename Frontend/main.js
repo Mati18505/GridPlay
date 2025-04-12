@@ -15,14 +15,17 @@ socket.onclose = function(event) {
     console.log("Connection closed: code: ", event.code, " reason: ", event.reason)
 };
 
-// From server
-const GameEnded = 0
-const GameMessageFromServer = 1
-const Approve = 2
-const NotAllowedErr = 3
+const ServerMessages = {
+    GameEnded: 0,
+    GameMessageFromServer: 1,
+    Approve: 2,
+    NotAllowedErr: 3,
+};
 
 // From client
-const GameMessageToServer = 0
+const ClientMessages = {
+    GameMessageToServer: 0,
+}
 
 var lastMovePos;
 var char;
@@ -37,8 +40,9 @@ socket.onmessage = function(messageJson) {
     const messageData = message.data;
 
     console.log(message.type);
+
     switch (message.type) {
-        case GameEnded:
+        case ServerMessages.gameEnded:
             console.log("Game end: ", messageData.status, messageData.cause);
 
             const eventGameEnd = new CustomEvent("game-end", {
@@ -50,18 +54,18 @@ socket.onmessage = function(messageJson) {
             document.dispatchEvent(eventGameEnd);
             break;
 
-        case GameMessageFromServer:
+        case ServerMessages.GameMessageFromServer:
             console.log("Match started");
 
             const eventGameMsg = new CustomEvent("game-msg", {
                 detail: {
-                    data: messageData.data
+                    data: messageData
                 }
             });
             document.dispatchEvent(eventGameMsg);
             break;
 
-        case Approve:
+        case ServerMessages.approved:
             if(messageData.approved) {
                 console.log(`Last action approved: ${messageData.reason}`);
 
@@ -72,7 +76,7 @@ socket.onmessage = function(messageJson) {
             
             break;
 
-        case NotAllowedErr:
+        case ServerMessages.NotAllowedErr:
             console.log("Last action not allowed: " + messageData.reason)
 
             document.dispatchEvent(eventNotAllowed)
