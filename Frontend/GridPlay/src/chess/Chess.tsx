@@ -14,9 +14,11 @@ function Chess() {
   useEffect(() => {
       serverConnection.current.onGameMsg = function (this: ServerConnection, ev: GameMsg) {
         console.log(ev.name);
+        console.log(ev.data);
+
         switch (ev.name) {
           case "game_start":
-            setOrientation(ev.data === "white" ? "white" : "black")
+            setOrientation(ev.data.color === "white" ? "white" : "black")
             break;
         }
       }

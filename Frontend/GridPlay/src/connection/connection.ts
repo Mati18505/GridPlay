@@ -11,7 +11,7 @@ export interface GameEnd {
 }
 export interface GameMsg {
     name: string;
-    data: string;
+    data: any;
 }
 export interface Approve {
     approve: boolean;
