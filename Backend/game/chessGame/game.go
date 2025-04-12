@@ -60,7 +60,7 @@ func (chessGame *ChessGame) GetGameStartMessage(playerId int) externalEvent.Even
 		}
 	}
 
-	return externalEvent.EventGameMessage{Data: data}
+	return externalEvent.EventGameMessage{Name: "game_start", Data: data}
 }
 
 func (chessGame *ChessGame) HandleGameMsg(msg externalEvent.EventGameMessage) ([]externalEvent.EventGameMessage, error) {

@@ -38,6 +38,7 @@ func (eType EventGameMessage) GetType() EventType {
 }
 
 type EventGameMessage struct {
+	Name string
 	Data any
 	PId int
 }

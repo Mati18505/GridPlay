@@ -91,6 +91,7 @@ func (state *gameActive) createGameMsgFromGameAns(player *handlers.Player, gameA
 	}
 
 	return handlers.EventGameMessage{
+		Name: gameAnswer.Name,
 		Data: gameAnswer.Data,
 		Player: receiver,
 	}

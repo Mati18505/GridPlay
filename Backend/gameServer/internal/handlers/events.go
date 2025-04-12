@@ -20,6 +20,7 @@ type EventRemoveRoom struct {
 }
 
 type EventGameMessage struct {
+	Name string
 	Data any
 	Player *Player
 }

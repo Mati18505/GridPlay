@@ -138,6 +138,7 @@ func (room *Room) sendGameAnswer(eGameMsg handlers.EventGameMessage) {
 	assert.NotNil(eGameMsg.Player, "player was nil")
 
 	msg := serverMsg.MakeMessage(serverMsg.TGameMessage, serverMsg.GameMessage{
+		Name: eGameMsg.Name,
 		Data: eGameMsg.Data,
 	})
 
