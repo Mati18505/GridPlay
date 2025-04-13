@@ -50,22 +50,23 @@ function reducer(state: ChessState, action: ChessAction): ChessState {
 function Chess() {
   const [state, dispatch] = useReducer(reducer, { position: 'start', orientation: 'white' })
 
-  useEffect(() => {
-    console.log("Setting onGameMsg callback")
-
-    ServerConnection.Instance.onGameMsg = function (this: ServerConnection, ev: GameMsg) {
-      switch (ev.name) {
-        case 'game_start':
-          dispatch({type: ev.name, orientation: ev.data.color})
-          break;
-        case 'fen_update':
-          dispatch({type: ev.name, position: ev.data.fen})
-          break;
-        default:
-          console.log('Unknown chesss action.')
-          break;
-      }
+  function serverCallback(this: ServerConnection, ev: GameMsg) {
+    switch (ev.name) {
+      case 'game_start':
+        dispatch({type: ev.name, orientation: ev.data.color})
+        break;
+      case 'fen_update':
+        dispatch({type: ev.name, position: ev.data.fen})
+        break;
+      default:
+        console.log('Unknown chesss action.')
+        break;
     }
+  }
+  
+  useEffect(() => {
+    console.log("Setting onGameMsg callback");
+    ServerConnection.Instance.onGameMsg = serverCallback;
 
     return () => {
       console.log("Clearing onGameMsg callback");
