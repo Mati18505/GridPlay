@@ -47,6 +47,10 @@ type msgGameStart struct {
 	Color string `json:"color"`
 }
 
+type msgFenUpdate struct {
+	Fen string `json:"fen"`
+}
+
 func (chessGame *ChessGame) GetGameStartMessage(playerId int) externalEvent.EventGameMessage {
 	var data msgGameStart
 
@@ -64,6 +68,10 @@ func (chessGame *ChessGame) GetGameStartMessage(playerId int) externalEvent.Even
 }
 
 func (chessGame *ChessGame) HandleGameMsg(msg externalEvent.EventGameMessage) ([]externalEvent.EventGameMessage, error) {
+	data := msgFenUpdate{
+		Fen: "rn1qkb1r/pppp1ppp/8/1P1pQN2/3b1n2/8/PPPPP1PP/RNB1KB1R w KQkq - 0 1",
+	}
+	return []externalEvent.EventGameMessage{{Name: "fen_update", Data: data, PId: msg.PId}}, nil
 	return []externalEvent.EventGameMessage{
 		{},
 	}, nil

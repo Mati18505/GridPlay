@@ -21,6 +21,10 @@ export interface Approve {
 enum ClientMessages {
     GameMessageToServer = 0,
 }
+interface SendMessage {
+    type: ClientMessages;
+    data: any;
+};
 
 class ServerConnection {
     private socket: WebSocket;
@@ -107,6 +111,15 @@ class ServerConnection {
                 console.log("Unknown message type.")
                 break;
         }
+    }
+
+    sendGameMsg(data: any) {
+        const msg: SendMessage = {
+            type: ClientMessages.GameMessageToServer,
+            data: data,
+        };
+
+        this.socket.send(JSON.stringify(msg))
     }
 }
 

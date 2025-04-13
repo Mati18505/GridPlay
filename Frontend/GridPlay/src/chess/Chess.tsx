@@ -1,8 +1,6 @@
 import './Chess.css'
 import { useEffect, useRef, useState } from "react";
-import { Chessboard, SparePiece } from "react-chessboard";
-import { Piece } from 'react-chessboard/dist/chessboard/types';
-import ChessGame from './ChessGame';
+import { Chessboard } from "react-chessboard";
 import ServerConnection from '../connection/connection';
 import { GameMsg } from '../connection/connection';
 
@@ -12,6 +10,7 @@ function Chess() {
   const serverConnection = useRef(ServerConnection.Instance)
 
   useEffect(() => {
+    console.log("test")
       serverConnection.current.onGameMsg = function (this: ServerConnection, ev: GameMsg) {
         console.log(ev.name);
         console.log(ev.data);
@@ -19,11 +18,16 @@ function Chess() {
         switch (ev.name) {
           case "game_start":
             setOrientation(ev.data.color === "white" ? "white" : "black")
+            serverConnection.current.sendGameMsg({"foo": "bar"})
+            break;
+          case "fen_update":
+            setState(ev.data.fen)
             break;
         }
       }
 
     return () => {
+      serverConnection.current.onGameMsg = undefined;
     }
   }, [])
 
