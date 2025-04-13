@@ -126,8 +126,6 @@ func (room *Room) handleDisconnect(eDisconnect handlers.EventDisconnect) {
 }
 
 func (room *Room) handleGameMsg(eGameMsg handlers.EventGameMessage) {
-	assert.NotNil(eGameMsg.Player, "event move player was nil")
-
 	err := room.state.handleGameMsg(eGameMsg)
 	if err != nil {
 		slog.Error("Cannot handle game message", "err", err.Error())
@@ -135,15 +133,13 @@ func (room *Room) handleGameMsg(eGameMsg handlers.EventGameMessage) {
 }
 
 func (room *Room) sendGameAnswer(eGameMsg handlers.EventGameMessage) {
-	assert.NotNil(eGameMsg.Player, "player was nil")
-
 	msg := serverMsg.MakeMessage(serverMsg.TGameMessage, serverMsg.GameMessage{
 		Name: eGameMsg.Name,
 		Data: eGameMsg.Data,
 	})
 
 	room.sendToNextHandler(handlers.EventSendMessage{
-		ConnectionId: eGameMsg.Player.GetConnectionId(),
+		ConnectionId: room.GetPlayerByGameId(eGameMsg.PlayerId).GetConnectionId(),
 		Msg: msg,
 	})
 }
@@ -233,4 +229,10 @@ func (room *Room) gameHasEnded() bool {
 	assert.NotNil(room.game, "game was nil")
 
 	return room.game.GetWinState().T != game.None
+}
+
+func (room *Room) GetPlayerByGameId(id int) *handlers.Player {
+	assert.Assert(0 <= id && id < 2, "id was out of range")
+
+	return room.players[id]
 }

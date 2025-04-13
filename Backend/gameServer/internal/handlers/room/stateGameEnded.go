@@ -40,7 +40,7 @@ func (state *gameEnded) handleGameMsg(eGameMsg handlers.EventGameMessage) error 
 	})
 
 	eApprove := handlers.EventSendMessage{
-		ConnectionId: eGameMsg.Player.GetConnectionId(),
+		ConnectionId: room.GetPlayerByGameId(eGameMsg.PlayerId).GetConnectionId(),
 		Msg: approveMsg,
 	}
 

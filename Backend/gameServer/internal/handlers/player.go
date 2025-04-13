@@ -53,7 +53,7 @@ func (player *Player) Handle(e event.Event) {
 }
 
 func (player *Player) handleGameMsg(eGameMsg EventGameMessage) {
-	eGameMsg.Player = player
+	eGameMsg.PlayerId = player.GetPlayerId()
 	player.sendToNextHandler(eGameMsg)
 }
 

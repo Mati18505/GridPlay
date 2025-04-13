@@ -29,7 +29,7 @@ func (state *gameActive) sendGameStartMsgs() {
 
 	for i := range 2 {
 		gameStartAns := room.game.GetGameStartMessage(i)
-		eGameStart := state.createGameMsgFromGameAns(room.players[i], gameStartAns)
+		eGameStart := state.createGameMsgFromGameAns(gameStartAns)
 		room.sendGameAnswer(eGameStart)
 	}
 }
@@ -40,7 +40,7 @@ func (state *gameActive) handleDisconnect(playerId, opponentId int) {
 
 	assert.NotNil(room.players, "players was nil")
 
-	opponent := room.players[opponentId]
+	opponent := room.GetPlayerByGameId(opponentId)
 
 	// This player disconnect first, so opponent should be online, in room.
 	assert.NotNil(opponent, "opponent should not be nil")
@@ -60,7 +60,7 @@ func (state *gameActive) handleGameMsg(eGameMsg handlers.EventGameMessage) error
 
 	externalGameMsg := externalEvent.EventGameMessage{
 		Data: eGameMsg.Data,
-		PId: eGameMsg.Player.GetPlayerId(),
+		PId: eGameMsg.PlayerId,
 	}
 
 	gameAnswers, err := room.game.HandleGameMsg(externalGameMsg)
@@ -70,7 +70,7 @@ func (state *gameActive) handleGameMsg(eGameMsg handlers.EventGameMessage) error
 	}
 
 	for _, gameAnswer := range gameAnswers {
-		eGameMsg := state.createGameMsgFromGameAns(eGameMsg.Player, gameAnswer)
+		eGameMsg := state.createGameMsgFromGameAns(gameAnswer)
 		room.sendGameAnswer(eGameMsg)
 	}
 
@@ -79,21 +79,11 @@ func (state *gameActive) handleGameMsg(eGameMsg handlers.EventGameMessage) error
 	return nil
 }
 
-func (state *gameActive) createGameMsgFromGameAns(player *handlers.Player, gameAnswer externalEvent.EventGameMessage) handlers.EventGameMessage {
-	assert.NotNil(player, "player was nil")
-
-	var receiver *handlers.Player
-
-	if gameAnswer.PId == player.GetPlayerId() {
-		receiver = player
-	} else {
-		receiver = state.GetOpponent(player.GetPlayerId())
-	}
-
+func (state *gameActive) createGameMsgFromGameAns(gameAnswer externalEvent.EventGameMessage) handlers.EventGameMessage {
 	return handlers.EventGameMessage{
 		Name: gameAnswer.Name,
 		Data: gameAnswer.Data,
-		Player: receiver,
+		PlayerId: gameAnswer.PId,
 	}
 }
 
@@ -102,11 +92,10 @@ func (state *gameActive) checkGameWin(eGameMsg handlers.EventGameMessage) {
 	room := state.room
 
 	assert.NotNil(room.game, "game was nil")
-	assert.NotNil(eGameMsg.Player, "event move player was nil")
 
 	wState := room.game.GetWinState()
-	player := eGameMsg.Player
-	opponent := state.GetOpponent(player.GetPlayerId())
+	player := room.GetPlayerByGameId(eGameMsg.PlayerId)
+	opponent := state.GetOpponent(eGameMsg.PlayerId)
 	
 	if wState.T == game.Win {
 		room.gameEndWinHandler(player.GetConnectionId(), opponent.GetConnectionId())
@@ -122,7 +111,7 @@ func (state *gameActive) GetOpponent(playerId int) *handlers.Player {
 	assert.NotNil(room.players, "players was nil")
 	
 	opponentId := room.GetOpponentId(playerId)
-	opponent := room.players[opponentId]
+	opponent := room.GetPlayerByGameId(opponentId)
 
 	// Game is active, so opponent shouldn't be nil.
 	assert.NotNil(opponent, "opponent was nil")
