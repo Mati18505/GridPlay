@@ -48,7 +48,9 @@ function Chess() {
   }
 
   return (
-    <Chessboard position={state} onPieceDrop={onDrop} boardOrientation={orientation}></Chessboard>
+    <div className="board_wrapper">
+      <Chessboard position={state} onPieceDrop={onDrop} boardOrientation={orientation}></Chessboard>
+    </div>
   )
 }
 
