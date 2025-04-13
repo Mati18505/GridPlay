@@ -1,33 +1,75 @@
 import './Chess.css'
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
 import { Chessboard } from "react-chessboard";
 import ServerConnection from '../connection/connection';
 import { GameMsg } from '../connection/connection';
 
+interface ChessState {
+  position: string;
+  orientation: 'white' | 'black';
+}
+
+interface GameStartAction {
+  type: 'game_start';
+  orientation: 'white' | 'black';
+}
+
+interface FenUpdateAction {
+  type: 'fen_update';
+  position: string;
+}
+
+type ChessAction = GameStartAction | FenUpdateAction;
+
+function reducer(state: ChessState, action: ChessAction): ChessState {
+  console.log(action.type);
+
+  switch (action.type) {
+    case 'game_start':
+      console.log("Current orientation:", state.orientation);
+      console.log("New orientation:", action.orientation);
+
+      ServerConnection.Instance.sendGameMsg({ foo: "bar" });
+      return {
+        ...state,
+        orientation: action.orientation,
+      };
+    case 'fen_update':
+      console.log("Current FEN:", state.position);
+      console.log("New FEN:", action.position);
+
+      return {
+        ...state,
+        position: action.position,
+      };
+    default:
+      return state;
+  }
+}
+
 function Chess() {
-  const [state, setState] = useState("start")
-  const [orientation, setOrientation] = useState<"white" | "black">("white");
-  const serverConnection = useRef(ServerConnection.Instance)
+  const [state, dispatch] = useReducer(reducer, { position: 'start', orientation: 'white' })
 
   useEffect(() => {
-    console.log("test")
-      serverConnection.current.onGameMsg = function (this: ServerConnection, ev: GameMsg) {
-        console.log(ev.name);
-        console.log(ev.data);
+    console.log("Setting onGameMsg callback")
 
-        switch (ev.name) {
-          case "game_start":
-            setOrientation(ev.data.color === "white" ? "white" : "black")
-            serverConnection.current.sendGameMsg({"foo": "bar"})
-            break;
-          case "fen_update":
-            setState(ev.data.fen)
-            break;
-        }
+    ServerConnection.Instance.onGameMsg = function (this: ServerConnection, ev: GameMsg) {
+      switch (ev.name) {
+        case 'game_start':
+          dispatch({type: ev.name, orientation: ev.data.color})
+          break;
+        case 'fen_update':
+          dispatch({type: ev.name, position: ev.data.fen})
+          break;
+        default:
+          console.log('Unknown chesss action.')
+          break;
       }
+    }
 
     return () => {
-      serverConnection.current.onGameMsg = undefined;
+      console.log("Clearing onGameMsg callback");
+      ServerConnection.Instance.onGameMsg = undefined;
     }
   }, [])
 
@@ -53,7 +95,7 @@ function Chess() {
 
   return (
     <div className="board_wrapper">
-      <Chessboard position={state} onPieceDrop={onDrop} boardOrientation={orientation}></Chessboard>
+      <Chessboard position={state.position} onPieceDrop={onDrop} boardOrientation={state.orientation}></Chessboard>
     </div>
   )
 }
